@@ -2,7 +2,6 @@
 .vscode/
 bin/
 obj/
-scripts/
 dist/
 Libs/
 *.user
