@@ -16,7 +16,7 @@ namespace GenneCaster.Classes.Player
             try
             {
                 Rigidbody rb = GTPlayer.Instance.playerRigidBody;
-                rb.AddForce(-Physics.gravity * rb.mass * (GTPlayer.Instance.scale * 1.15f), ForceMode.Force);
+                rb.AddForce(-Physics.gravity * rb.mass * (GTPlayer.Instance.scale * 1.12f), ForceMode.Force);
                 rb.linearVelocity = Vector3.zero;
                 rb.angularVelocity = Vector3.zero;
 
