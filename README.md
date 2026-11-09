@@ -2,15 +2,13 @@
 
 GenneCaster is a free, open-source spectating mod for Gorilla Tag, built for casters. It turns the desktop view into a broadcast camera with first-person and orbit spectating, a freecam, nametags, a minimap, a player leaderboard, a closest-lava readout, a two-team scoreboard with a match timer, and Discord Rich Presence. Every feature is configured from in-game panels and saved between sessions, and whole setups can be stored as named presets.
 
-![In-game view: the spectator camera following a player, with their nametag, platform icon and FPS, plus the minimap in the top-right corner](docs/images/in-game.jpg)
-
 GenneCaster is a fan-made mod. It is not affiliated with or endorsed by Another Axiom.
 
 ## Install
 
 1. Install [BepInEx 5](https://github.com/BepInEx/BepInEx/releases) (x64) into your Gorilla Tag folder and start the game once so BepInEx creates its folders.
-2. Download `GenneCaster-v<version>.zip` from the [releases page](https://github.com/g3nn3sis/GenneCaster/releases).
-3. Unzip it into the Gorilla Tag folder. The DLL ends up at `Gorilla Tag\BepInEx\plugins\GenneCaster\GenneCaster.dll`.
+2. Download `GenneCaster-<version>.dll` from the [releases page](https://github.com/g3nn3sis/GenneCaster/releases).
+3. Install it into the BepInEx plugins folder, it should end up at `Gorilla Tag\BepInEx\plugins\GenneCaster-<version>.dll`.
 4. Start the game on PC. The GenneCaster panel opens in the top-left corner.
 
 Each release is built against the Gorilla Tag version that was current when it was published. If a game update breaks the mod, check for a newer release.
