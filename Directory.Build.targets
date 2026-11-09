@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Project>
+	<Target Name="CheckPluginVersion" BeforeTargets="CoreCompile" Condition="'$(MSBuildProjectName)' == 'GenneCaster'">
+		<PropertyGroup>
+			<PluginInfoText>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)\Base\PluginInfo.cs'))</PluginInfoText>
+			<PluginVersion>$([System.Text.RegularExpressions.Regex]::Match($(PluginInfoText), `Version\s*=\s*\W([0-9][0-9.]*)`).Groups[1].Value)</PluginVersion>
+		</PropertyGroup>
+		<Error Condition="'$(PluginVersion)' != '$(Version)'"
+		       Text="PluginInfo.Version ($(PluginVersion)) does not match &lt;Version&gt; $(Version) in Directory.Build.props." />
+	</Target>
+	<Target Name="CopyToPlugins" AfterTargets="Build" Condition="'$(MSBuildProjectName)' == 'GenneCaster'">
+		<Copy SourceFiles="$(TargetPath)" DestinationFiles="$(PluginsPath)\$(ProjectName)\$(TargetFileName)" />
+		<Message Text="Copied to $(PluginsPath)\$(ProjectName)" Importance="high" />
+	</Target>
+</Project>

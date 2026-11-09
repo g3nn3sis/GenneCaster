@@ -1,0 +1,21 @@
+# The bundled DiscordRPC source (External/) is vendored upstream and nullable-oblivious.
+# Silence ONLY its nullable (CS86xx) warnings here, scoped to this folder, so first-party
+# code keeps full nullable enforcement. Intentionally not root=true: this layers on top of
+# any repo-level config rather than replacing it.
+[*.cs]
+dotnet_diagnostic.CS8600.severity = none
+dotnet_diagnostic.CS8601.severity = none
+dotnet_diagnostic.CS8602.severity = none
+dotnet_diagnostic.CS8603.severity = none
+dotnet_diagnostic.CS8604.severity = none
+dotnet_diagnostic.CS8618.severity = none
+dotnet_diagnostic.CS8619.severity = none
+dotnet_diagnostic.CS8620.severity = none
+dotnet_diagnostic.CS8622.severity = none
+dotnet_diagnostic.CS8625.severity = none
+dotnet_diagnostic.CS8629.severity = none
+dotnet_diagnostic.CS8634.severity = none
+dotnet_diagnostic.CS8714.severity = none
+# Non-nullable-flow warnings also originating only in the vendored source:
+dotnet_diagnostic.CS8765.severity = none
+dotnet_diagnostic.CS0108.severity = none

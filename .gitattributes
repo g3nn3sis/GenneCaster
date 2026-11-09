@@ -1,0 +1,10 @@
+* text=auto
+*.cs text diff=csharp
+*.csproj text
+*.props text
+*.targets text
+*.md text
+*.png binary
+*.jpg binary
+*.dll binary
+*.bundle binary

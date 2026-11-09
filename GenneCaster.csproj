@@ -1,0 +1,91 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net48</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<AssemblyName>GenneCaster</AssemblyName>
+		<RootNamespace>GenneCaster</RootNamespace>
+		<Product>GenneCaster</Product>
+		<Copyright>Copyright (c) 2026 GenneCaster contributors</Copyright>
+	</PropertyGroup>
+
+	<!-- Nothing uses System.Net.Http, so drop the implicit using instead of pulling in a package for it. -->
+	<ItemGroup>
+		<Using Remove="System.Net.Http" />
+	</ItemGroup>
+
+	<!-- The test project and any .claude worktree copies live under the repo root; keep their sources
+	     out of the plugin's own compile. -->
+	<ItemGroup>
+		<Compile Remove="Tests\**\*.cs" />
+		<Compile Remove=".claude\**\*.cs" />
+	</ItemGroup>
+
+	<!-- Game and BepInEx assemblies are compile-time only; Private=false keeps them out of the build output. -->
+	<ItemDefinitionGroup>
+		<Reference>
+			<Private>false</Private>
+		</Reference>
+	</ItemDefinitionGroup>
+
+	<!-- Only the assemblies the plugin actually uses are referenced. The game ships ~160 managed DLLs;
+	     adding one here is cheap, so reference a new assembly the moment a feature needs a type from it
+	     rather than listing them all up front. Grouped by origin. -->
+	<ItemGroup>
+		<!-- BCL shim the game ships -->
+		<Reference Include="netstandard" HintPath="$(GameAssemblyPath)\netstandard.dll" />
+
+		<!-- Modding runtime -->
+		<Reference Include="0Harmony" HintPath="$(BepInExAssemblyPath)\0Harmony.dll" />
+		<Reference Include="BepInEx" HintPath="$(BepInExAssemblyPath)\BepInEx.dll" />
+
+		<!-- Gorilla Tag game code (VRRig, GTPlayer, GorillaNetworking, GTZone, ...) -->
+		<Reference Include="Assembly-CSharp" HintPath="$(GameAssemblyPath)\Assembly-CSharp.dll" />
+		<Reference Include="Assembly-CSharp-firstpass" HintPath="$(GameAssemblyPath)\Assembly-CSharp-firstpass.dll" />
+
+		<!-- Newtonsoft.Json is used by the vendored DiscordRPC client under External\ -->
+		<Reference Include="Newtonsoft.Json" HintPath="$(GameAssemblyPath)\Newtonsoft.Json.dll" />
+
+		<!-- Photon networking (Photon.Pun: PhotonNetwork, rooms, players) -->
+		<Reference Include="Photon3Unity3D" HintPath="$(GameAssemblyPath)\Photon3Unity3D.dll" />
+		<Reference Include="PhotonRealtime" HintPath="$(GameAssemblyPath)\PhotonRealtime.dll" />
+		<Reference Include="PhotonUnityNetworking" HintPath="$(GameAssemblyPath)\PhotonUnityNetworking.dll" />
+
+		<!-- Unity packages -->
+		<Reference Include="Unity.Cinemachine" HintPath="$(GameAssemblyPath)\Unity.Cinemachine.dll" />
+		<!-- Transitively required: game/TMP method signatures expose Unity.Collections.NativeList<> -->
+		<Reference Include="Unity.Collections" HintPath="$(GameAssemblyPath)\Unity.Collections.dll" />
+		<Reference Include="Unity.InputSystem" HintPath="$(GameAssemblyPath)\Unity.InputSystem.dll" />
+		<Reference Include="Unity.TextMeshPro" HintPath="$(GameAssemblyPath)\Unity.TextMeshPro.dll" />
+
+		<!-- UnityEngine and the specific engine modules the plugin touches -->
+		<Reference Include="UnityEngine" HintPath="$(GameAssemblyPath)\UnityEngine.dll" />
+		<Reference Include="UnityEngine.CoreModule" HintPath="$(GameAssemblyPath)\UnityEngine.CoreModule.dll" />
+		<Reference Include="UnityEngine.IMGUIModule" HintPath="$(GameAssemblyPath)\UnityEngine.IMGUIModule.dll" />
+		<Reference Include="UnityEngine.ParticleSystemModule" HintPath="$(GameAssemblyPath)\UnityEngine.ParticleSystemModule.dll" />
+		<Reference Include="UnityEngine.AudioModule" HintPath="$(GameAssemblyPath)\UnityEngine.AudioModule.dll" />
+		<Reference Include="UnityEngine.PhysicsModule" HintPath="$(GameAssemblyPath)\UnityEngine.PhysicsModule.dll" />
+		<Reference Include="UnityEngine.AssetBundleModule" HintPath="$(GameAssemblyPath)\UnityEngine.AssetBundleModule.dll" />
+		<Reference Include="UnityEngine.ImageConversionModule" HintPath="$(GameAssemblyPath)\UnityEngine.ImageConversionModule.dll" />
+		<Reference Include="UnityEngine.UI" HintPath="$(GameAssemblyPath)\UnityEngine.UI.dll" />
+		<Reference Include="UnityEngine.UIModule" HintPath="$(GameAssemblyPath)\UnityEngine.UIModule.dll" />
+		<Reference Include="UnityEngine.TextCoreFontEngineModule" HintPath="$(GameAssemblyPath)\UnityEngine.TextCoreFontEngineModule.dll" />
+		<Reference Include="UnityEngine.TextCoreTextEngineModule" HintPath="$(GameAssemblyPath)\UnityEngine.TextCoreTextEngineModule.dll" />
+		<Reference Include="UnityEngine.TextRenderingModule" HintPath="$(GameAssemblyPath)\UnityEngine.TextRenderingModule.dll" />
+	</ItemGroup>
+
+	<!-- Nametag platform icons, embedded in the DLL and loaded locally by AssetManager. -->
+	<ItemGroup>
+		<EmbeddedResource Include="Resources\Icons\meta.png" LogicalName="GenneCaster.Icons.meta.png" />
+		<EmbeddedResource Include="Resources\Icons\steam.png" LogicalName="GenneCaster.Icons.steam.png" />
+	</ItemGroup>
+
+	<!-- HUD asset bundle (leaderboard + closest-lava canvases), authored in Unity 6000.2.9f1 to match
+	     Gorilla Tag and embedded in the DLL so it loads offline through HudAssets. -->
+	<ItemGroup>
+		<EmbeddedResource Include="Resources\Bundles\gennecaster.bundle" LogicalName="GenneCaster.Bundles.gennecaster.bundle" />
+	</ItemGroup>
+
+</Project>
