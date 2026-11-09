@@ -8,7 +8,7 @@ before changing code. To **add a feature**, follow [docs/ADDING_FEATURES.md](doc
 GenneCaster is a **BepInEx plugin for Gorilla Tag** (a Unity VR game) that turns the game into
 a spectator/casting tool: free/orbit camera, nametags, minimap, leaderboard, scoreboard,
 closest-lava readout, Discord Rich Presence, and an in-game IMGUI control panel. Target
-framework is **net48**; it builds to a single `GenneCaster.dll`.
+framework is **net48**; it builds to a single `GenneCaster-<version>.dll`.
 
 ## The one rule that shapes everything
 
@@ -33,7 +33,7 @@ dotnet build GenneCaster.csproj -c Release
 dotnet test Tests/GenneCaster.Tests.csproj
 ```
 
-A successful plugin build **copies `GenneCaster.dll` into the game's
+A successful plugin build **copies `GenneCaster-<version>.dll` into the game's
 `BepInEx\plugins\GenneCaster\`** folder automatically (see `Directory.Build.targets`). Paths
 to the game and BepInEx are in `Directory.Build.props` (`GamePath`).
 

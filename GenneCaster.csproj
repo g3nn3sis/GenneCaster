@@ -6,6 +6,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<AssemblyName>GenneCaster</AssemblyName>
+		<TargetName>$(AssemblyName)-$(Version)</TargetName>
 		<RootNamespace>GenneCaster</RootNamespace>
 		<Product>GenneCaster</Product>
 		<Copyright>Copyright (c) 2026 GenneCaster contributors</Copyright>

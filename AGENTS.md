@@ -1,7 +1,7 @@
 # AGENTS.md
 
 Entry point for AI agents and contributors working on **GenneCaster**, a BepInEx spectator/
-casting plugin for Gorilla Tag (net48, builds to a single `GenneCaster.dll`).
+casting plugin for Gorilla Tag (net48, builds to a single `GenneCaster-<version>.dll`).
 
 Start here, then follow the right door:
 

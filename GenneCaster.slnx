@@ -1,4 +1,3 @@
 <Solution>
   <Project Path="GenneCaster.csproj" />
-  <Project Path="Tests/GenneCaster.Tests.csproj" />
 </Solution>

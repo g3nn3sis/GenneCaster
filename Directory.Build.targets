@@ -9,6 +9,10 @@
 		       Text="PluginInfo.Version ($(PluginVersion)) does not match &lt;Version&gt; $(Version) in Directory.Build.props." />
 	</Target>
 	<Target Name="CopyToPlugins" AfterTargets="Build" Condition="'$(MSBuildProjectName)' == 'GenneCaster'">
+		<ItemGroup>
+			<StalePluginBuild Include="$(PluginsPath)\$(ProjectName)\$(ProjectName).dll;$(PluginsPath)\$(ProjectName)\$(ProjectName)-*.dll" Exclude="$(PluginsPath)\$(ProjectName)\$(TargetFileName)" />
+		</ItemGroup>
+		<Delete Files="@(StalePluginBuild)" />
 		<Copy SourceFiles="$(TargetPath)" DestinationFiles="$(PluginsPath)\$(ProjectName)\$(TargetFileName)" />
 		<Message Text="Copied to $(PluginsPath)\$(ProjectName)" Importance="high" />
 	</Target>
