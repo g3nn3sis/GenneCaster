@@ -1,7 +1,7 @@
 # Working in GenneCaster
 
 Instructions for an AI agent (or any new contributor) working in this repository. Read this
-before changing code. To **add a feature**, follow [docs/ADDING_FEATURES.md](docs/ADDING_FEATURES.md).
+before changing code.
 
 ## What this is
 
@@ -12,25 +12,18 @@ framework is **net48**; it builds to a single `GenneCaster-<version>.dll`.
 
 ## The one rule that shapes everything
 
-**The game cannot be launched from here, and the repo is not under git.** The compiler and the
-xUnit suite are the entire safety net. Therefore:
+**The game cannot be launched from here.** The compiler is the entire safety net. Therefore:
 
-- After **every** code change, run the Release build and the tests, and keep both green.
+- After **every** code change, run the Release build and keep it green.
 - The build is configured **warnings-as-errors** — a new warning fails the build. Keep it at
   zero warnings.
-- A backup zip of the pre-refactor tree lives in [`.backups/`](.backups/). It is the restore
-  point; do not delete it.
 - Behaviour you cannot verify in-game must be preserved exactly. Prefer compiler-checkable,
   behaviour-preserving changes over speculative rewrites.
 
-## Build & test
+## Build
 
 ```bash
 dotnet build GenneCaster.csproj -c Release
-```
-
-```bash
-dotnet test Tests/GenneCaster.Tests.csproj
 ```
 
 A successful plugin build **copies `GenneCaster-<version>.dll` into the game's
@@ -92,6 +85,5 @@ newline at end of file. Keep related code grouped and ordered the same way acros
 ## Also see
 
 - [AGENTS.md](AGENTS.md) — entry point / map of these docs
-- [docs/ADDING_FEATURES.md](docs/ADDING_FEATURES.md) — the feature contract and performance rules
 - [CONTRIBUTING.md](CONTRIBUTING.md) — contribution policy, code style, release steps
 - [README.md](README.md) — what the mod does, install, controls, build-from-source
