@@ -17,10 +17,8 @@
 		<Using Remove="System.Net.Http" />
 	</ItemGroup>
 
-	<!-- The test project and any .claude worktree copies live under the repo root; keep their sources
-	     out of the plugin's own compile. -->
+	<!-- Any .claude worktree copies live under the repo root; keep their sources out of the plugin's own compile. -->
 	<ItemGroup>
-		<Compile Remove="Tests\**\*.cs" />
 		<Compile Remove=".claude\**\*.cs" />
 	</ItemGroup>
 

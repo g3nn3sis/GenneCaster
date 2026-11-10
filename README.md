@@ -79,13 +79,7 @@ dotnet build .\GenneCaster.csproj -c Release --nologo
 
 Every build drops `GenneCaster-<version>.dll` straight into `Gorilla Tag\BepInEx\plugins\GenneCaster\`. Game and BepInEx assemblies are never copied into the output.
 
-Run the tests with:
-
-```powershell
-dotnet test .\Tests\GenneCaster.Tests.csproj --nologo
-```
-
-The version lives in `Directory.Build.props` and `Base/PluginInfo.cs`; the build stops with an error if they differ. See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request, and [CHANGELOG.md](CHANGELOG.md) for what changed in each release.
+The version lives in `Directory.Build.props` and `Base/PluginInfo.cs`; the build stops with an error if they differ. See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 
 ## License
 

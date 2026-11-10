@@ -7,8 +7,7 @@ Start here, then follow the right door:
 
 | You want to… | Read |
 | --- | --- |
-| **Work in this repo** (build, test, conventions, the safety net) | **[CLAUDE.md](CLAUDE.md)** |
-| **Add a feature** (how features are wired, config, panels, perf rules) | **[docs/ADDING_FEATURES.md](docs/ADDING_FEATURES.md)** |
+| **Work in this repo** (build, conventions, the safety net) | **[CLAUDE.md](CLAUDE.md)** |
 | Contribution policy, code style, release steps | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | What the mod does, install, controls | [README.md](README.md) |
 
@@ -16,10 +15,8 @@ Start here, then follow the right door:
 
 - **Build:** `dotnet build GenneCaster.csproj -c Release` — a successful build copies the DLL
   into the game's `BepInEx\plugins\GenneCaster\`.
-- **Test:** `dotnet test Tests/GenneCaster.Tests.csproj`.
-- **The game can't be launched from here and there's no git history.** The compiler and the
-  xUnit suite are the only safety net, so keep both green after every change; the build is
-  warnings-as-errors. A pre-refactor backup is in [`.backups/`](.backups/).
+- **The game can't be launched from here.** The compiler is the only safety net, so keep the
+  build green after every change; it is warnings-as-errors.
 - **Code standard: professional, production-grade, and comment-free.** Code documents itself
   through naming and structure — no explanatory comments in the mod's own source. Whitespace is
   consistent: four-space indent, one blank line between members, no trailing whitespace, single
@@ -28,7 +25,6 @@ Start here, then follow the right door:
 - A feature is just a class that subclasses `ObjectComponent` — it is auto-discovered by
   reflection and attached to the persistent `_GenneCaster` object. No registry.
 - Settings live in `CasterConfig`; never rename an existing section/key. Don't edit
-  `External/` (vendored). Keep per-frame code allocation-free (see the performance rules in
-  [docs/ADDING_FEATURES.md](docs/ADDING_FEATURES.md)).
+  `External/` (vendored). Keep per-frame code allocation-free.
 
 **Working instructions are in [CLAUDE.md](CLAUDE.md). Read it before changing code.**
