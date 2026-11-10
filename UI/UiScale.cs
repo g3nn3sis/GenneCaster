@@ -6,7 +6,7 @@ namespace GenneCaster.UI
     internal static class UiScale
     {
         private const float ReferenceHeight = 1080f;
-        private const float MinimumAutoScale = 0.75f;
+        private const float MinimumAutoScale = 0.85f;
 
         internal static float Factor => Mathf.Clamp(Screen.height / ReferenceHeight, MinimumAutoScale, 4f) * CasterConfig.UiScale.Value;
         internal static float Width => Screen.width / Factor;
