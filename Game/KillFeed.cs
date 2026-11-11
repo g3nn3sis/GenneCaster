@@ -159,7 +159,7 @@ namespace GenneCaster.Game
                 Row row = GetRow(i);
                 row.Rt.anchoredPosition = new Vector2(0f, -i * (rowHeight + RowSpacing));
 
-                string text = $"<color=#{TaggedHex}>{entry.Name}</color>  <size=80%>TAGGED</size>";
+                string text = $"<color=#{TaggedHex}>{entry.Name}</color>  TAGGED";
                 if (row.Text != text) { row.Text = text; row.Value.text = text; }
 
                 float age = now - entry.Born;
