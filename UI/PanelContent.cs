@@ -35,7 +35,7 @@ namespace GenneCaster.UI
         internal PanelContent(PanelOrchestrator owner)
         {
             this.owner = owner;
-            DrawContent = new Action<Panel>[] { DrawMain, DrawUniversal, DrawFreecam, DrawCamera, DrawPlayerSettings, DrawTime, DrawMapLoader, DrawPlayer, DrawNametag, DrawTheme, DrawMiniMap, DrawLeaderboard, DrawClosestLava, DrawScoreboard, DrawPresets };
+            DrawContent = new Action<Panel>[] { DrawMain, DrawUniversal, DrawWasd, DrawCamera, DrawPlayerSettings, DrawTime, DrawMapLoader, DrawPlayer, DrawNametag, DrawTheme, DrawMiniMap, DrawLeaderboard, DrawClosestLava, DrawScoreboard, DrawPresets };
             zones = ((GTZone[])Enum.GetValues(typeof(GTZone))).Distinct().Where(z => !NonZones.Contains(z.ToString())).ToArray();
             zoneNames = zones.Select(z => DisplayNames.Humanize(z.ToString())).ToArray();
             zoneButtons = new Action[zones.Length];
@@ -58,7 +58,7 @@ namespace GenneCaster.UI
         private void DrawMain(Panel panel)
         {
             panel.Button($"Panels: {OnOff(owner.IsVisible(PanelId.Universal))}", () => owner.Toggle(PanelId.Universal));
-            panel.Button($"Freecam Panel: {OnOff(owner.IsVisible(PanelId.Freecam))}", () => owner.Toggle(PanelId.Freecam));
+            panel.Button($"WASD Panel: {OnOff(owner.IsVisible(PanelId.Wasd))}", () => owner.Toggle(PanelId.Wasd));
             panel.Label(RoomStatus());
             panel.Label("Room Code");
             roomToJoin = panel.TextField(roomToJoin, LocalPlayerManager.MaxNameLength, LocalPlayerManager.NormalizeName);
@@ -92,16 +92,30 @@ namespace GenneCaster.UI
             panel.Button("Reset Layout", owner.ResetLayout);
         }
 
-        private void DrawFreecam(Panel panel)
+        private void DrawWasd(Panel panel)
         {
-            GorillaController.freeCam = panel.Toggle("FreeCam", GorillaController.freeCam);
+            if (CameraManager.mode == CameraMode.Freecam) panel.Label("WASD is off in Freecam mode");
+            else GorillaController.wasd = panel.Toggle("WASD", GorillaController.wasd);
             GorillaController.mouseClick = panel.Toggle("Mouse Click", GorillaController.mouseClick);
+            DrawFlightSpeeds(panel);
+        }
+
+        private static void DrawFlightSpeeds(Panel panel)
+        {
             GorillaController.MovementSpeed = panel.Slider("Movement Speed", GorillaController.MovementSpeed, 5f, 35f, "F1", " m/s");
             GorillaController.MouseSensitivity = panel.Slider("Mouse Sensitivity", GorillaController.MouseSensitivity, 0.05f, 2f);
         }
 
         private void DrawCamera(Panel panel)
         {
+            panel.Label($"Mode: {CameraManager.mode}");
+            panel.HorizontalArea(() =>
+            {
+                panel.Button("Default", () => CameraManager.mode = CameraMode.Default, CameraManager.mode != CameraMode.Default);
+                panel.Button("Spectator", () => CameraManager.mode = CameraMode.Spectator, CameraManager.mode != CameraMode.Spectator);
+                panel.Button("Freecam", () => CameraManager.mode = CameraMode.Freecam, CameraManager.mode != CameraMode.Freecam);
+            });
+            if (CameraManager.mode == CameraMode.Freecam) DrawFlightSpeeds(panel);
             CameraManager.fieldOfView = panel.Slider("Field Of View", CameraManager.fieldOfView, 10f, 130f, "F0", "°");
             CameraManager.nearClipPlane = panel.Slider("Near Clip", CameraManager.nearClipPlane, 0.01f, 0.99f);
             CasterConfig.HeadDistance.Value = panel.Slider("Head Distance", CasterConfig.HeadDistance.Value, 0f, 0.99f);

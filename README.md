@@ -18,9 +18,9 @@ Each release is built against the Gorilla Tag version that was current when it w
 | Panel | What it configures |
 | --- | --- |
 | GenneCaster | Show the other panels, join a room by code, join a public room, leave the room, and see your connection status |
-| Camera Manager | Field of view, near clip, first person or orbit distance, orbit speed, position and rotation smoothing, auto orbit, and one-tap FOV and view presets |
+| Camera Manager | Camera mode (Default, Spectator, Freecam), field of view, near clip, first person or orbit distance, orbit speed, position and rotation smoothing, auto orbit, and one-tap FOV and view presets |
 | Player Settings | Microphone mode, audio from the spectator camera, player list updates, Discord presence, VSync, AFK kick, rig interpolation |
-| FreeCam | Freecam, mouse click, movement speed, mouse sensitivity |
+| WASD | Fly your own player with WASD, mouse click, movement speed, mouse sensitivity |
 | Time Manager | Morning, day, evening, night, rain |
 | Map Loader | Load any map |
 | Player Manager | Your name and color, with a preview |
@@ -48,7 +48,7 @@ Panels stack themselves into columns until you drag one. Dragged positions are s
 | `B` `N` `M` | Scoreboard timer: start, pause, reset (configurable) |
 | `H` `J` / `K` `L` | Scoreboard: team A score up/down, team B score up/down (configurable) |
 | Arrow keys | Orbit the spectated player when Head Distance is above 0 |
-| Hold right mouse | Fly the freecam (FreeCam must be on) |
+| Hold right mouse | Fly the camera in Freecam mode, or your player when WASD is on (WASD turns off in Freecam mode) |
 | `W` `A` `S` `D` | Move while flying |
 | `Space` and `Left Shift` | Move up and down while flying |
 | `E` (held) | Noclip while flying |

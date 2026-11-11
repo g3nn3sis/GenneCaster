@@ -1,5 +1,4 @@
 using GenneCaster.Base;
-using GorillaLocomotion;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -28,7 +27,7 @@ namespace GenneCaster.GameCamera.Modes
             ReadOrbitInput(deltaTime);
             if (IsFirstPerson)
             {
-                FollowHead(camera, target);
+                HeadView.Follow(camera, target);
                 return;
             }
             Vector3 pivot = target.transform.position;
@@ -61,19 +60,6 @@ namespace GenneCaster.GameCamera.Modes
             if (keyboard.downArrowKey.isPressed) OrbitPitch -= step;
             OrbitYaw = Mathf.Repeat(OrbitYaw + 180f, 360f) - 180f;
             OrbitPitch = Mathf.Clamp(OrbitPitch, -MaxOrbitPitch, MaxOrbitPitch);
-        }
-
-        private static void FollowHead(CameraWrapper camera, VRRig target)
-        {
-            GorillaTagger? tagger = GorillaTagger.Instance;
-            if (tagger != null && target == tagger.offlineVRRig && GTPlayer.Instance != null)
-            {
-                camera.SetPose(GTPlayer.Instance.headCollider.transform.position, target.headMesh.transform.rotation);
-                return;
-            }
-            Transform body = target.transform;
-            Vector3 eyes = body.position + target.headBodyOffset + body.up * 0.09f + body.forward * 0.06f;
-            camera.SetPose(eyes, target.headMesh.transform.rotation);
         }
     }
 }
