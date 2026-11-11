@@ -39,6 +39,7 @@ namespace GenneCaster.UI
         internal string Title { get; }
         internal bool Enabled { get; set; }
         internal Rect Rect => rect;
+        private float ContentWidth => rect.width - Inset * 2f;
 
         internal event Action? Closed;
         internal event Action? Moved;
@@ -91,7 +92,7 @@ namespace GenneCaster.UI
             }
 
             float top = HeaderY + HeaderHeight + RowGap;
-            GUILayout.BeginArea(new Rect(Inset, top, rect.width - Inset * 2f, Mathf.Max(1f, rect.height - top - Inset)));
+            GUILayout.BeginArea(new Rect(Inset, top, ContentWidth, Mathf.Max(1f, rect.height - top - Inset)));
             GUILayout.BeginVertical();
             try { content?.Invoke(this); }
             catch (Exception e) when (!(e is ExitGUIException)) { Log.ExceptionOnce($"panel-{Title}", e, $"Drawing the {Title} panel failed"); }
@@ -126,7 +127,12 @@ namespace GenneCaster.UI
             return result;
         }
 
-        internal void Label(string text) => GUI.Label(NextRect(LabelHeight), text, labelStyle);
+        internal void Label(string text)
+        {
+            measured.text = text;
+            float wrappedHeight = Mathf.Ceil(labelStyle!.CalcHeight(measured, ContentWidth - 2f));
+            GUI.Label(NextRect(Mathf.Max(LabelHeight, wrappedHeight)), text, labelStyle);
+        }
 
         internal float Slider(string label, float value, float min, float max, string format = "F2", string unit = "")
         {
@@ -160,8 +166,9 @@ namespace GenneCaster.UI
             finally { GUILayout.EndHorizontal(); }
         }
 
-        internal Vector2 ScrollArea(Vector2 scroll, float height, Action draw)
+        internal Vector2 ScrollArea(Vector2 scroll, float maximumHeight, int buttonRows, Action draw)
         {
+            float height = Mathf.Min(maximumHeight, buttonRows * (ButtonHeight + RowGap));
             scroll = GUILayout.BeginScrollView(scroll, false, false, GUIStyle.none, GUIStyle.none, GUILayout.Height(height));
             try { draw(); }
             finally { GUILayout.EndScrollView(); }
@@ -205,7 +212,7 @@ namespace GenneCaster.UI
             fieldStyle = new GUIStyle(GUI.skin.textField) { alignment = TextAnchor.MiddleCenter, clipping = TextClipping.Clip, padding = new RectOffset(4, 4, 1, 1), margin = none, border = new RectOffset(border, border, border, border) };
             closeStyle = new GUIStyle(GUI.skin.button) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, fontSize = 11, padding = new RectOffset(0, 0, 0, 1), margin = none, border = new RectOffset(border, border, border, border) };
             titleStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, fontSize = TitleFontSize, fontStyle = FontStyle.Bold, padding = none, margin = none, clipping = TextClipping.Clip };
-            labelStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, fontSize = ControlFontSize, padding = new RectOffset(2, 2, 0, 0), margin = none, clipping = TextClipping.Clip };
+            labelStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, fontSize = ControlFontSize, padding = new RectOffset(2, 2, 0, 0), margin = none, wordWrap = true, clipping = TextClipping.Clip };
             foreach (GUIStyle style in new[] { buttonStyle, fieldStyle, closeStyle, titleStyle, labelStyle }) SetTextColor(style, Color.white);
             ApplyTextures();
         }

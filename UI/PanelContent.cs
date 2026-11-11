@@ -160,7 +160,7 @@ namespace GenneCaster.UI
 
         private void DrawMapLoader(Panel panel)
         {
-            mapScroll = panel.ScrollArea(mapScroll, ListHeight, () =>
+            mapScroll = panel.ScrollArea(mapScroll, ListHeight, zones.Length, () =>
             {
                 for (int i = 0; i < zones.Length; i++)
                     panel.Button(zoneNames[i], zoneButtons[i]);
@@ -212,7 +212,7 @@ namespace GenneCaster.UI
         private void DrawTheme(Panel panel)
         {
             panel.Label($"Current: {ColorSpace.Current.Name}");
-            themeScroll = panel.ScrollArea(themeScroll, ListHeight, () =>
+            themeScroll = panel.ScrollArea(themeScroll, ListHeight, ColorSpace.Themes.Length, () =>
             {
                 for (int i = 0; i < ColorSpace.Themes.Length; i++)
                     panel.Button(ColorSpace.Themes[i].Name, themeButtons[i]);
@@ -318,7 +318,7 @@ namespace GenneCaster.UI
                 panel.Label("No presets saved.");
                 return;
             }
-            presetScroll = panel.ScrollArea(presetScroll, ListHeight, () =>
+            presetScroll = panel.ScrollArea(presetScroll, ListHeight, presetNames.Length, () =>
             {
                 for (int i = 0; i < presetNames.Length; i++)
                 {
