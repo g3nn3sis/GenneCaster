@@ -79,6 +79,11 @@ namespace GenneCaster.Base
         internal static ConfigEntry<Key> ScoreboardTeamBUpKey = null!;
         internal static ConfigEntry<Key> ScoreboardTeamBDownKey = null!;
 
+        internal static ConfigEntry<bool> KillFeedEnabled = null!;
+        internal static ConfigEntry<float> KillFeedScale = null!;
+        internal static ConfigEntry<float> KillFeedOffsetX = null!;
+        internal static ConfigEntry<float> KillFeedOffsetY = null!;
+
         internal static ConfigEntry<string> PlayerName = null!;
         internal static ConfigEntry<float> PlayerRed = null!;
         internal static ConfigEntry<float> PlayerGreen = null!;
@@ -162,6 +167,11 @@ namespace GenneCaster.Base
             ScoreboardTeamADownKey = config.Bind("Scoreboard", "Team A Score Down Key", Key.J, "Remove a point from team A.");
             ScoreboardTeamBUpKey = config.Bind("Scoreboard", "Team B Score Up Key", Key.K, "Add a point to team B.");
             ScoreboardTeamBDownKey = config.Bind("Scoreboard", "Team B Score Down Key", Key.L, "Remove a point from team B.");
+
+            KillFeedEnabled = config.Bind("KillFeed", "Enabled", false, "Show the top-right feed of players as they get tagged.");
+            KillFeedScale = Range(config, "KillFeed", "Scale", 1f, 0.5f, 2f, "Size multiplier on top of automatic resolution scaling.");
+            KillFeedOffsetX = Range(config, "KillFeed", "Offset X", 0f, -800f, 800f, "Shift left (negative) or right (positive), in 1080p pixels.");
+            KillFeedOffsetY = Range(config, "KillFeed", "Offset Y", 0f, -500f, 500f, "Move down (negative) or up (positive), in 1080p pixels.");
 
             PlayerName = config.Bind("Player", "Name", "GENNECASTER", "Up to 12 letters or digits.");
             PlayerRed = Range(config, "Player", "Red", 0f, 0f, 1f);

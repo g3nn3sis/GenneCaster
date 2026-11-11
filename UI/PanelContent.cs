@@ -35,7 +35,7 @@ namespace GenneCaster.UI
         internal PanelContent(PanelOrchestrator owner)
         {
             this.owner = owner;
-            DrawContent = new Action<Panel>[] { DrawMain, DrawUniversal, DrawWasd, DrawCamera, DrawPlayerSettings, DrawTime, DrawMapLoader, DrawPlayer, DrawNametag, DrawTheme, DrawMiniMap, DrawLeaderboard, DrawClosestLava, DrawScoreboard, DrawPresets };
+            DrawContent = new Action<Panel>[] { DrawMain, DrawUniversal, DrawWasd, DrawCamera, DrawPlayerSettings, DrawTime, DrawMapLoader, DrawPlayer, DrawNametag, DrawTheme, DrawMiniMap, DrawLeaderboard, DrawClosestLava, DrawScoreboard, DrawKillFeed, DrawPresets };
             zones = ((GTZone[])Enum.GetValues(typeof(GTZone))).Distinct().Where(z => !NonZones.Contains(z.ToString())).ToArray();
             zoneNames = zones.Select(z => DisplayNames.Humanize(z.ToString())).ToArray();
             zoneButtons = new Action[zones.Length];
@@ -88,6 +88,7 @@ namespace GenneCaster.UI
             panel.Button("Leaderboard", () => owner.Toggle(PanelId.Leaderboard));
             panel.Button("Closest Lava", () => owner.Toggle(PanelId.ClosestLava));
             panel.Button("Scoreboard", () => owner.Toggle(PanelId.Scoreboard));
+            panel.Button("Kill Feed", () => owner.Toggle(PanelId.KillFeed));
             panel.Button("Presets", () => owner.Toggle(PanelId.Presets));
             panel.Button("Reset Layout", owner.ResetLayout);
         }
@@ -277,6 +278,15 @@ namespace GenneCaster.UI
             });
             panel.Label($"Timer: {CasterConfig.ScoreboardStartKey.Value} start / {CasterConfig.ScoreboardPauseKey.Value} pause / {CasterConfig.ScoreboardResetKey.Value} reset");
             panel.Label($"Score: {CasterConfig.ScoreboardTeamAUpKey.Value}/{CasterConfig.ScoreboardTeamADownKey.Value} team A, {CasterConfig.ScoreboardTeamBUpKey.Value}/{CasterConfig.ScoreboardTeamBDownKey.Value} team B");
+            DrawHudFont(panel);
+        }
+
+        private void DrawKillFeed(Panel panel)
+        {
+            KillFeed.enabled = panel.Toggle("Kill Feed", KillFeed.enabled);
+            CasterConfig.KillFeedScale.Value = panel.Slider("Scale", CasterConfig.KillFeedScale.Value, 0.5f, 2f, "F2", "x");
+            CasterConfig.KillFeedOffsetX.Value = panel.Slider("Offset X", CasterConfig.KillFeedOffsetX.Value, -800f, 800f, "F0", "px");
+            CasterConfig.KillFeedOffsetY.Value = panel.Slider("Offset Y", CasterConfig.KillFeedOffsetY.Value, -500f, 500f, "F0", "px");
             DrawHudFont(panel);
         }
 

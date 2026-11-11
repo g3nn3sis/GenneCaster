@@ -30,9 +30,10 @@ Each release is built against the Gorilla Tag version that was current when it w
 | Leaderboard | Bottom-left stack of rounded pills, each showing the keyboard number that spectates that player, their name, an optional FPS readout and their Steam/Meta icon; tagged names are orange, others white, and the spectated player is bold. Enable, scale, position offset, platform icons, FPS, font |
 | Closest Lava | Bottom-center rounded box with the distance from the spectated player to the nearest tagged (lava) player; 0 when spectating a tagged player. Enable, scale, position offset, font |
 | Scoreboard | Top-center two-team scoreboard with a central match timer, all under the same theme. You set the team names and scores from its panel; the timer runs a 10 second pre-roll (orange, shown negative) then counts up in white and stops at 3:00, with start/pause and reset. Enable, scale, position offset, font |
+| Kill Feed | Top-right stack of rounded pills that announces each player the moment they are tagged — their name in orange next to a `TAGGED` label — with the newest on top, up to five at once, each fading in and out after a few seconds. Enable, scale, position offset, font |
 | Presets | Save the current settings as named presets and load or delete them later; toggle autosave and save settings on demand |
 
-The Leaderboard, Closest Lava and Scoreboard overlays are Unity canvases loaded from an asset bundle embedded in the DLL, so they render at the same size on any resolution. All three share one font, picked from the game's fonts with the Previous/Next Font buttons in any of their panels.
+The Leaderboard, Closest Lava, Scoreboard and Kill Feed overlays are Unity canvases loaded from an asset bundle embedded in the DLL, so they render at the same size on any resolution. They all share one font, picked from the game's fonts with the Previous/Next Font buttons in any of their panels.
 
 Panels stack themselves into columns until you drag one. Dragged positions are saved, and the **Reset Layout** button in the Universal panel puts every panel back. The interface scales with your resolution, and `UI Scale` in the config adds your own multiplier on top.
 

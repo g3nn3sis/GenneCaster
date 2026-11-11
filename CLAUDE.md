@@ -34,7 +34,7 @@ to the game and BepInEx are in `Directory.Build.props` (`GamePath`).
 
 ```
 Base/            Plugin bootstrap: BaseLoader, ObjectComponent, HarmonyPatches, CasterConfig, Log, PluginInfo
-Game/            On-screen/game features: NameTag, MiniMap, Leaderboard, Scoreboard, ClosestLava, TimeManager, assets
+Game/            On-screen/game features: NameTag, MiniMap, Leaderboard, Scoreboard, ClosestLava, KillFeed, TimeManager, assets
 Player/          Local + networked player: controllers, rig list, platform detection
 GameCamera/      Spectator/free camera: CameraManager, wrapper, smoothing, Modes/
 UI/              IMGUI panel system: CoreUI, PanelOrchestrator, Panel, PanelContent, theming, scaling

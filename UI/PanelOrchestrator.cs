@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace GenneCaster.UI
 {
-    internal enum PanelId { Main, Universal, Wasd, Camera, PlayerSettings, Time, MapLoader, Player, Nametag, Theme, MiniMap, Leaderboard, ClosestLava, Scoreboard, Presets, Count }
+    internal enum PanelId { Main, Universal, Wasd, Camera, PlayerSettings, Time, MapLoader, Player, Nametag, Theme, MiniMap, Leaderboard, ClosestLava, Scoreboard, KillFeed, Presets, Count }
 
     internal sealed class PanelOrchestrator : IDisposable
     {
@@ -17,7 +17,7 @@ namespace GenneCaster.UI
         {
             "GenneCaster", "Universal", "WASD", "Camera Manager", "Player Settings", "Time Manager",
             "Map Loader", "Player Manager", "NameTag Manager", "Theme Loader", "MiniMap Manager",
-            "Leaderboard", "Closest Lava", "Scoreboard", "Presets"
+            "Leaderboard", "Closest Lava", "Scoreboard", "Kill Feed", "Presets"
         };
 
         private static readonly PanelId[][] Columns =
@@ -26,7 +26,7 @@ namespace GenneCaster.UI
             new[] { PanelId.Camera, PanelId.PlayerSettings },
             new[] { PanelId.Time, PanelId.Player, PanelId.Scoreboard },
             new[] { PanelId.MapLoader, PanelId.Nametag, PanelId.Leaderboard },
-            new[] { PanelId.Theme, PanelId.MiniMap, PanelId.ClosestLava }
+            new[] { PanelId.Theme, PanelId.MiniMap, PanelId.ClosestLava, PanelId.KillFeed }
         };
 
         private readonly Panel[] panels = new Panel[(int)PanelId.Count];
