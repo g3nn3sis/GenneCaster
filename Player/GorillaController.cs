@@ -8,7 +8,7 @@ namespace GenneCaster.Player
 {
     internal sealed class GorillaController : ObjectComponent
     {
-        internal static bool freeCam { get => CasterConfig.FreeCam.Value; set => CasterConfig.FreeCam.Value = value; }
+        internal static bool wasd { get => CasterConfig.Wasd.Value; set => CasterConfig.Wasd.Value = value; }
         internal static bool mouseClick { get => CasterConfig.MouseClick.Value; set => CasterConfig.MouseClick.Value = value; }
         internal static float MovementSpeed { get => CasterConfig.MovementSpeed.Value; set => CasterConfig.MovementSpeed.Value = value; }
         internal static float MouseSensitivity { get => CasterConfig.MouseSpeed.Value; set => CasterConfig.MouseSpeed.Value = value; }
@@ -47,11 +47,11 @@ namespace GenneCaster.Player
             if (player == null || tagger == null || tagger.offlineVRRig == null || mouse == null || keyboard == null) return;
             try
             {
-                bool fly = freeCam && mouse.rightButton.isPressed;
+                bool fly = wasd && mouse.rightButton.isPressed;
                 if (fly != flying) SetFlying(fly, tagger);
                 if (fly) Fly(player, tagger, mouse, keyboard);
             }
-            catch (Exception e) { Log.ExceptionOnce("freecam", e, "Freecam update failed"); }
+            catch (Exception e) { Log.ExceptionOnce("wasd", e, "WASD flight update failed"); }
         }
 
         private void SetFlying(bool fly, GorillaTagger tagger)

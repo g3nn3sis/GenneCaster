@@ -1,4 +1,5 @@
 using BepInEx.Configuration;
+using GenneCaster.GameCamera;
 using System.IO;
 using System.Text;
 using UnityEngine;
@@ -14,6 +15,7 @@ namespace GenneCaster.Base
         private static bool dirty;
         private static float lastChange;
 
+        internal static ConfigEntry<CameraMode> ActiveCameraMode = null!;
         internal static ConfigEntry<float> FieldOfView = null!;
         internal static ConfigEntry<float> NearClipPlane = null!;
         internal static ConfigEntry<bool> AudioListener = null!;
@@ -29,7 +31,7 @@ namespace GenneCaster.Base
         internal static ConfigEntry<Key> NextPlayerKey = null!;
         internal static ConfigEntry<Key> PreviousPlayerKey = null!;
 
-        internal static ConfigEntry<bool> FreeCam = null!;
+        internal static ConfigEntry<bool> Wasd = null!;
         internal static ConfigEntry<bool> MouseClick = null!;
         internal static ConfigEntry<float> MovementSpeed = null!;
         internal static ConfigEntry<float> MouseSpeed = null!;
@@ -95,6 +97,7 @@ namespace GenneCaster.Base
             file = config;
             config.SaveOnConfigSet = false;
 
+            ActiveCameraMode = config.Bind("Camera", "Mode", CameraMode.Spectator, "Default shows your own first person view, Spectator follows the selected player, Freecam flies the camera on its own.");
             FieldOfView = Range(config, "Camera", "Field Of View", 100f, 10f, 130f);
             NearClipPlane = Range(config, "Camera", "Near Clip", 0.01f, 0.01f, 0.99f);
             AudioListener = config.Bind("Camera", "Audio Listener", true, "Hear the game from the spectator camera.");
@@ -110,7 +113,7 @@ namespace GenneCaster.Base
             NextPlayerKey = config.Bind("Camera", "Next Player Key", Key.RightBracket, "Spectate the next player in the list.");
             PreviousPlayerKey = config.Bind("Camera", "Previous Player Key", Key.LeftBracket, "Spectate the previous player in the list.");
 
-            FreeCam = config.Bind("Freecam", "Enabled", false);
+            Wasd = config.Bind("Freecam", "Enabled", false, "Hold right mouse to fly your own player with WASD. Turned off while the camera is in Freecam mode.");
             MouseClick = config.Bind("Freecam", "Mouse Click", false, "Left click presses whatever is under the cursor with the right hand.");
             MovementSpeed = Range(config, "Freecam", "Movement Speed", 10f, 5f, 35f);
             MouseSpeed = Range(config, "Freecam", "Mouse Sensitivity", 0.3f, 0.05f, 2f);

@@ -109,7 +109,7 @@ namespace GenneCaster.Game
 
         private static void UpdateTag(Tag tag, VRRig rig, Quaternion facing, TMP_FontAsset? font)
         {
-            bool visible = !(NetworkedPlayerManager.selectedPlayer == rig && SpectatorCamera.IsFirstPerson);
+            bool visible = !(CameraManager.mode == CameraMode.Spectator && NetworkedPlayerManager.selectedPlayer == rig && SpectatorCamera.IsFirstPerson);
             if (tag.Root.activeSelf != visible) tag.Root.SetActive(visible);
             if (!visible) return;
             tag.Root.transform.rotation = facing;

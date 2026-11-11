@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace GenneCaster.UI
 {
-    internal enum PanelId { Main, Universal, Freecam, Camera, PlayerSettings, Time, MapLoader, Player, Nametag, Theme, MiniMap, Leaderboard, ClosestLava, Scoreboard, Presets, Count }
+    internal enum PanelId { Main, Universal, Wasd, Camera, PlayerSettings, Time, MapLoader, Player, Nametag, Theme, MiniMap, Leaderboard, ClosestLava, Scoreboard, Presets, Count }
 
     internal sealed class PanelOrchestrator : IDisposable
     {
@@ -15,14 +15,14 @@ namespace GenneCaster.UI
 
         private static readonly string[] Titles =
         {
-            "GenneCaster", "Universal", "FreeCam", "Camera Manager", "Player Settings", "Time Manager",
+            "GenneCaster", "Universal", "WASD", "Camera Manager", "Player Settings", "Time Manager",
             "Map Loader", "Player Manager", "NameTag Manager", "Theme Loader", "MiniMap Manager",
             "Leaderboard", "Closest Lava", "Scoreboard", "Presets"
         };
 
         private static readonly PanelId[][] Columns =
         {
-            new[] { PanelId.Main, PanelId.Universal, PanelId.Freecam, PanelId.Presets },
+            new[] { PanelId.Main, PanelId.Universal, PanelId.Wasd, PanelId.Presets },
             new[] { PanelId.Camera, PanelId.PlayerSettings },
             new[] { PanelId.Time, PanelId.Player, PanelId.Scoreboard },
             new[] { PanelId.MapLoader, PanelId.Nametag, PanelId.Leaderboard },
@@ -43,7 +43,7 @@ namespace GenneCaster.UI
             {
                 int index = i;
                 var panel = new Panel(PanelWidth, Titles[i], accent);
-                positions[i] = CasterConfig.BindPanelPosition(((PanelId)i).ToString());
+                positions[i] = CasterConfig.BindPanelPosition(PositionKey((PanelId)i));
                 if (PositionFormat.TryParse(positions[i].Value, out Vector2 saved))
                 {
                     panel.SetPosition(saved);
@@ -55,6 +55,8 @@ namespace GenneCaster.UI
             panels[(int)PanelId.Main].Enabled = true;
             panels[(int)PanelId.Main].Closed += () => CoreUI.Visible = false;
         }
+
+        private static string PositionKey(PanelId id) => id == PanelId.Wasd ? "Freecam" : id.ToString();
 
         internal bool IsVisible(PanelId id) => panels[(int)id].Enabled;
         internal void Toggle(PanelId id) => panels[(int)id].Enabled = !panels[(int)id].Enabled;
