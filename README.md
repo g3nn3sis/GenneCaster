@@ -84,4 +84,4 @@ The version lives in `Directory.Build.props` and `Base/PluginInfo.cs`; the build
 
 ## License
 
-GenneCaster is licensed under [MIT](LICENSE). The bundled Discord RPC source carries its own [MIT license](External/DiscordRPC/LICENSE); see [third-party notices](THIRD_PARTY_NOTICES.md).
+GenneCaster is released under the [GenneCaster Source-Available License](LICENSE): the source is public to view, but it may not be used, run, modified, or redistributed without permission. This is **not** an OSI-approved open-source license. The bundled Discord RPC source carries its own [MIT license](External/DiscordRPC/LICENSE); see [third-party notices](THIRD_PARTY_NOTICES.md).

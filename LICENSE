@@ -1,21 +1,67 @@
-MIT License
+GenneCaster Source-Available License
 
 Copyright (c) 2026 GenneCaster contributors
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+All rights reserved.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+This software and its associated source code and documentation (the "Software")
+are made publicly available for the sole purpose of viewing and reading the
+source code. The copyright holders retain all rights not expressly granted
+below.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+1. Permitted use
+
+   You are granted a limited, non-exclusive, non-transferable, revocable
+   permission to view and read the source code of the Software, and to fork
+   the repository on the hosting platform solely to propose contributions back
+   to the Software via pull request.
+
+2. Restrictions
+
+   Except with the prior written permission of the copyright holders, you may
+   NOT:
+
+   (a) use, run, execute, or otherwise operate the Software or any build
+       produced from it, for any purpose;
+   (b) copy, reproduce, or store the Software other than as strictly required
+       to view the source code or to prepare a contribution under Section 1;
+   (c) modify, adapt, translate, or create derivative works of the Software,
+       except as part of a contribution proposed back under Section 1;
+   (d) publish, distribute, sublicense, sell, rent, lease, host, mirror, or
+       otherwise make the Software or any derivative or build thereof available
+       to any third party;
+   (e) remove, alter, or obscure this license or any copyright, trademark, or
+       attribution notices.
+
+3. Contributions
+
+   By submitting a contribution to the Software, you grant the copyright
+   holders a perpetual, worldwide, royalty-free, irrevocable license to use,
+   reproduce, modify, and distribute your contribution as part of the Software
+   under this or any future license of the copyright holders' choosing.
+
+4. No other rights
+
+   No rights or licenses are granted by implication, estoppel, or otherwise.
+   This is not an open-source license as defined by the Open Source Initiative,
+   and it does not grant the freedoms associated with free or open-source
+   software.
+
+5. Termination
+
+   Any breach of this license automatically and immediately terminates the
+   permissions granted under Section 1. Upon termination you must cease all use
+   of the Software and destroy any copies in your possession.
+
+6. Disclaimer of warranty and limitation of liability
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+
+The bundled third-party source under External/ is licensed separately under its
+own terms; see External/DiscordRPC/LICENSE and THIRD_PARTY_NOTICES.md.

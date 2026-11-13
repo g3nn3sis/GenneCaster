@@ -49,11 +49,13 @@ Namespaces mirror folders: `GenneCaster.<Folder>` (e.g. `GenneCaster.Game`). The
 
 ## Code standard
 
-Professional, production-grade C#. **No comments** — the code must document itself through
-precise naming, small cohesive methods, and clear structure. If a piece of logic needs a
-comment to be understood, rename it or extract it until it doesn't. (This applies to the mod's
-own code under `Base, Game, Player, UI, GameCamera, DiscordRichPresence, Patches`; the vendored
-`External/` tree is left exactly as upstream ships it.)
+Professional, production-grade C#. **No explanatory comments** — the code must document itself
+through precise naming, small cohesive methods, and clear structure. If a piece of logic needs a
+comment to be understood, rename it or extract it until it doesn't. The one exception is the
+three-line license header required at the top of every source file (copyright, SPDX identifier,
+usage notice); a new `.cs` file must carry it verbatim, matching the existing files. (This
+applies to the mod's own code under `Base, Game, Player, UI, GameCamera, DiscordRichPresence,
+Patches`; the vendored `External/` tree is left exactly as upstream ships it.)
 
 Whitespace is consistent and deliberate: four-space indentation, braces on their own line, a
 single blank line between members (never two or more), no trailing whitespace, exactly one
