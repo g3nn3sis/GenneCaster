@@ -4,6 +4,7 @@
 
 using GenneCaster.Base;
 using GenneCaster.Player;
+using GenneCaster.Replay;
 using Photon.Pun;
 using TMPro;
 using UnityEngine;
@@ -50,8 +51,9 @@ namespace GenneCaster.Game
         private float rowHeight = FallbackRowHeight;
         private int appliedFont = -1;
         private bool failed;
+        private bool showingReplay;
 
-        private static bool Active => enabled && PhotonNetwork.InRoom;
+        private static bool Active => enabled && (PhotonNetwork.InRoom || ReplaySession.IsReplaying);
 
         internal void LateUpdate()
         {
@@ -64,15 +66,43 @@ namespace GenneCaster.Game
                 return;
             }
 
-            try { Detect(); }
-            catch (Exception e) { Log.ExceptionOnce("killfeed-detect", e, "Reading tag changes failed"); }
-
-            PruneExpired();
+            if (ReplaySession.Player is ReplayPlayer replay) ShowReplay(replay);
+            else ShowLive();
 
             if (instance == null && !Build()) return;
             if (!instance!.activeSelf) instance.SetActive(true);
             try { Refresh(); }
             catch (Exception e) { Log.ExceptionOnce("killfeed", e, "Updating the kill feed failed"); }
+        }
+
+        private void ShowLive()
+        {
+            if (showingReplay)
+            {
+                showingReplay = false;
+                entries.Clear();
+            }
+            try { Detect(); }
+            catch (Exception e) { Log.ExceptionOnce("killfeed-detect", e, "Reading tag changes failed"); }
+            PruneExpired();
+        }
+
+        private void ShowReplay(ReplayPlayer replay)
+        {
+            showingReplay = true;
+            taggedState.Clear();
+            entries.Clear();
+            ReplayRecording recording = replay.Recording;
+            float now = Time.unscaledTime;
+            for (int i = recording.Events.Count - 1; i >= 0 && entries.Count < MaxEntries; i--)
+            {
+                ReplayEvent replayEvent = recording.Events[i];
+                if (replayEvent.Time > replay.Cursor) continue;
+                float age = replay.Cursor - replayEvent.Time;
+                if (age >= Lifetime) break;
+                if (replayEvent.Kind != ReplayEventKind.Tagged) continue;
+                entries.Add(new Entry { Name = recording.Actor(replayEvent.ActorId)?.Name ?? "Player", Born = now - age });
+            }
         }
 
         private void Detect()

@@ -6,6 +6,7 @@ using GenneCaster.Base;
 using GenneCaster.GameCamera;
 using GenneCaster.GameCamera.Modes;
 using GenneCaster.Player;
+using GenneCaster.Replay;
 using Photon.Pun;
 using TMPro;
 using UnityEngine;
@@ -30,6 +31,24 @@ namespace GenneCaster.Game
         private const int FpsWarnThreshold = 55;
         private static readonly Color LavaColor = new Color32(255, 20, 0, 255);
 
+        private readonly struct TagInfo
+        {
+            internal readonly bool Visible;
+            internal readonly string Name;
+            internal readonly Color Color;
+            internal readonly int Fps;
+            internal readonly int Platform;
+
+            internal TagInfo(bool visible, string name, Color color, int fps, int platform)
+            {
+                Visible = visible;
+                Name = name;
+                Color = color;
+                Fps = fps;
+                Platform = platform;
+            }
+        }
+
         private sealed class Tag
         {
             internal readonly GameObject Root;
@@ -43,10 +62,10 @@ namespace GenneCaster.Game
             internal float NameHalfWidth;
             internal bool Seen;
 
-            internal Tag(VRRig rig)
+            internal Tag(Transform anchor)
             {
-                Root = new GameObject($"_nametag {rig.GetInstanceID()}");
-                Root.transform.SetParent(rig.transform, false);
+                Root = new GameObject($"_nametag {anchor.GetInstanceID()}");
+                Root.transform.SetParent(anchor, false);
                 Name = CreateText(Root.transform, "name", NameHeight, NameFontSize);
                 Fps = CreateText(Root.transform, "fps", FpsHeight, FpsFontSize);
                 var iconObject = new GameObject("platform");
@@ -69,8 +88,8 @@ namespace GenneCaster.Game
             }
         }
 
-        private readonly Dictionary<VRRig, Tag> tags = new Dictionary<VRRig, Tag>();
-        private readonly List<VRRig> removed = new List<VRRig>();
+        private readonly Dictionary<UnityEngine.Object, Tag> tags = new Dictionary<UnityEngine.Object, Tag>();
+        private readonly List<UnityEngine.Object> removed = new List<UnityEngine.Object>();
 
         private static TMP_FontAsset? CurrentFont
         {
@@ -85,7 +104,8 @@ namespace GenneCaster.Game
         internal void LateUpdate()
         {
             Camera? view = CameraManager.camera?.Camera;
-            if (!enabled || !PhotonNetwork.InRoom || view == null)
+            ReplayPlayer? replay = ReplaySession.Player;
+            if (!enabled || view == null || (replay == null && !PhotonNetwork.InRoom))
             {
                 Clear();
                 return;
@@ -95,27 +115,71 @@ namespace GenneCaster.Game
                 Quaternion facing = Quaternion.LookRotation(view.transform.forward);
                 TMP_FontAsset? font = CurrentFont;
                 foreach (Tag tag in tags.Values) tag.Seen = false;
-                foreach (VRRig rig in NetworkedPlayerManager.activeRigs ?? Array.Empty<VRRig>())
-                {
-                    if (rig == null || rig.isOfflineVRRig || rig.Creator == null) continue;
-                    if (!tags.TryGetValue(rig, out Tag? tag) || tag == null)
-                    {
-                        tag = new Tag(rig);
-                        tags[rig] = tag;
-                    }
-                    tag.Seen = true;
-                    UpdateTag(tag, rig, facing, font);
-                }
+                if (replay != null) ShowReplay(replay, facing, font);
+                else ShowLive(facing, font);
                 RemoveUnseen();
             }
             catch (Exception e) { Log.ExceptionOnce("nametag-update", e, "Updating nametags failed"); }
         }
 
-        private static void UpdateTag(Tag tag, VRRig rig, Quaternion facing, TMP_FontAsset? font)
+        private void ShowLive(Quaternion facing, TMP_FontAsset? font)
+        {
+            foreach (VRRig rig in NetworkedPlayerManager.activeRigs ?? Array.Empty<VRRig>())
+            {
+                if (rig == null || rig.isOfflineVRRig || rig.Creator == null) continue;
+                Show(rig, rig.transform, LiveInfo(rig), facing, font);
+            }
+        }
+
+        private void ShowReplay(ReplayPlayer replay, Quaternion facing, TMP_FontAsset? font)
+        {
+            foreach (ReplayPuppet puppet in replay.Puppets)
+            {
+                if (puppet.Actor.IsLocal) continue;
+                Show(puppet.Body, puppet.Body, ReplayInfo(replay, puppet), facing, font);
+            }
+        }
+
+        private void Show(UnityEngine.Object key, Transform anchor, TagInfo info, Quaternion facing, TMP_FontAsset? font)
+        {
+            if (!tags.TryGetValue(key, out Tag? tag) || tag == null)
+            {
+                tag = new Tag(anchor);
+                tags[key] = tag;
+            }
+            tag.Seen = true;
+            UpdateTag(tag, info, facing, font);
+        }
+
+        private static TagInfo LiveInfo(VRRig rig)
         {
             bool visible = !(CameraManager.mode == CameraMode.Spectator && NetworkedPlayerManager.selectedPlayer == rig && SpectatorCamera.IsFirstPerson);
-            if (tag.Root.activeSelf != visible) tag.Root.SetActive(visible);
-            if (!visible) return;
+            if (!visible) return default;
+            return new TagInfo(
+                true,
+                rig.Creator.NickName ?? string.Empty,
+                NameColor(TagStateOf(rig), rig.playerColor),
+                hzDisplay ? Mathf.RoundToInt(NetworkedPlayerManager.GetFPS(rig)) : 0,
+                platformIndicator ? NetworkedPlayerManager.GetPlatform(rig) : 0);
+        }
+
+        private static TagInfo ReplayInfo(ReplayPlayer replay, ReplayPuppet puppet)
+        {
+            bool visible = puppet.Visible && !(replay.IsSpectating(puppet) && SpectatorCamera.IsFirstPerson);
+            if (!visible) return default;
+            ActorFrame frame = puppet.Current;
+            return new TagInfo(
+                true,
+                puppet.Actor.Name,
+                NameColor(frame.Tag, puppet.Actor.Color),
+                frame.Fps,
+                platformIndicator ? puppet.Actor.Platform : 0);
+        }
+
+        private static void UpdateTag(Tag tag, TagInfo info, Quaternion facing, TMP_FontAsset? font)
+        {
+            if (tag.Root.activeSelf != info.Visible) tag.Root.SetActive(info.Visible);
+            if (!info.Visible) return;
             tag.Root.transform.rotation = facing;
 
             bool layoutChanged = false;
@@ -126,33 +190,23 @@ namespace GenneCaster.Game
                 tag.Fps.font = font;
                 layoutChanged = true;
             }
-            string nickName = rig.Creator.NickName ?? string.Empty;
-            if (tag.NameText != nickName)
+            if (tag.NameText != info.Name)
             {
-                tag.NameText = nickName;
-                tag.Name.text = nickName;
+                tag.NameText = info.Name;
+                tag.Name.text = info.Name;
                 layoutChanged = true;
             }
-            tag.Name.color = NameColor(rig);
+            tag.Name.color = info.Color;
 
             bool showFps = hzDisplay;
             if (tag.Fps.gameObject.activeSelf != showFps) tag.Fps.gameObject.SetActive(showFps);
-            if (showFps)
+            if (showFps && info.Fps != tag.FpsValue)
             {
-                int fps = Mathf.RoundToInt(NetworkedPlayerManager.GetFPS(rig));
-                if (fps != tag.FpsValue)
-                {
-                    tag.FpsValue = fps;
-                    tag.Fps.text = $"<color={FpsColor(fps)}>{fps}</color> FPS";
-                }
+                tag.FpsValue = info.Fps;
+                tag.Fps.text = $"<color={FpsColor(info.Fps)}>{info.Fps}</color> FPS";
             }
 
-            Sprite? icon = null;
-            if (platformIndicator)
-            {
-                int platform = NetworkedPlayerManager.GetPlatform(rig);
-                icon = platform == 1 ? AssetManager.smallMetaSprite : platform == 2 ? AssetManager.smallSteamSprite : null;
-            }
+            Sprite? icon = info.Platform == 1 ? AssetManager.smallMetaSprite : info.Platform == 2 ? AssetManager.smallSteamSprite : null;
             if (tag.IconSprite != icon)
             {
                 tag.IconSprite = icon;
@@ -175,21 +229,28 @@ namespace GenneCaster.Game
             return "red";
         }
 
-        private static Color NameColor(VRRig rig)
+        private static ReplayTagState TagStateOf(VRRig rig)
         {
-            if (rig.lavaParticleSystem != null && rig.lavaParticleSystem.isPlaying) return LavaColor;
-            if (rig.rockParticleSystem != null && rig.rockParticleSystem.isPlaying) return Color.red;
-            return usePlayerColor ? rig.playerColor : Color.white;
+            if (rig.lavaParticleSystem != null && rig.lavaParticleSystem.isPlaying) return ReplayTagState.Lava;
+            if (rig.rockParticleSystem != null && rig.rockParticleSystem.isPlaying) return ReplayTagState.Rock;
+            return ReplayTagState.None;
         }
+
+        private static Color NameColor(ReplayTagState state, Color playerColor) => state switch
+        {
+            ReplayTagState.Lava => LavaColor,
+            ReplayTagState.Rock => Color.red,
+            _ => usePlayerColor ? playerColor : Color.white
+        };
 
         private void RemoveUnseen()
         {
-            foreach (KeyValuePair<VRRig, Tag> pair in tags)
+            foreach (KeyValuePair<UnityEngine.Object, Tag> pair in tags)
                 if (!pair.Value.Seen || pair.Key == null) removed.Add(pair.Key!);
-            foreach (VRRig rig in removed)
+            foreach (UnityEngine.Object key in removed)
             {
-                if (tags[rig].Root != null) Destroy(tags[rig].Root);
-                tags.Remove(rig);
+                if (tags[key].Root != null) Destroy(tags[key].Root);
+                tags.Remove(key);
             }
             removed.Clear();
         }

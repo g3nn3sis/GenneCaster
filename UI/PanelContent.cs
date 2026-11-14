@@ -7,6 +7,7 @@ using GenneCaster.Game;
 using GenneCaster.GameCamera;
 using GenneCaster.GameCamera.Modes;
 using GenneCaster.Player;
+using GenneCaster.Replay;
 using GorillaNetworking;
 using Photon.Pun;
 using UnityEngine;
@@ -26,6 +27,8 @@ namespace GenneCaster.UI
         private Vector2 mapScroll;
         private Vector2 themeScroll;
         private Vector2 presetScroll;
+        private Vector2 replayScroll;
+        private Vector2 replayListScroll;
         private string roomToJoin = string.Empty;
         private string playerName;
         private string presetName = string.Empty;
@@ -39,7 +42,7 @@ namespace GenneCaster.UI
         internal PanelContent(PanelOrchestrator owner)
         {
             this.owner = owner;
-            DrawContent = new Action<Panel>[] { DrawMain, DrawUniversal, DrawWasd, DrawCamera, DrawPlayerSettings, DrawTime, DrawMapLoader, DrawPlayer, DrawNametag, DrawTheme, DrawMiniMap, DrawLeaderboard, DrawClosestLava, DrawScoreboard, DrawKillFeed, DrawPresets };
+            DrawContent = new Action<Panel>[] { DrawMain, DrawUniversal, DrawWasd, DrawCamera, DrawPlayerSettings, DrawTime, DrawMapLoader, DrawPlayer, DrawNametag, DrawTheme, DrawMiniMap, DrawLeaderboard, DrawClosestLava, DrawScoreboard, DrawKillFeed, DrawPresets, DrawReplay };
             zones = ((GTZone[])Enum.GetValues(typeof(GTZone))).Distinct().Where(z => !NonZones.Contains(z.ToString())).ToArray();
             zoneNames = zones.Select(z => DisplayNames.Humanize(z.ToString())).ToArray();
             zoneButtons = new Action[zones.Length];
@@ -94,6 +97,7 @@ namespace GenneCaster.UI
             panel.Button("Scoreboard", () => owner.Toggle(PanelId.Scoreboard));
             panel.Button("Kill Feed", () => owner.Toggle(PanelId.KillFeed));
             panel.Button("Presets", () => owner.Toggle(PanelId.Presets));
+            panel.Button("Replay", () => owner.Toggle(PanelId.Replay));
             panel.Button("Reset Layout", owner.ResetLayout);
         }
 
@@ -325,7 +329,7 @@ namespace GenneCaster.UI
             panel.Button("Save Settings", CasterConfig.ForceSave);
 
             presetName = panel.TextField(presetName, 24, Presets.Sanitize);
-            panel.Button("Save Preset", SaveCurrentPreset, presetName.Trim().Length > 0);
+            panel.Button("Save Preset", SaveCurrentPreset, presetName.Trim().Length > 0 && !Presets.IsReserved(presetName.Trim()));
 
             if (presetNames.Length == 0)
             {
@@ -342,6 +346,77 @@ namespace GenneCaster.UI
                         panel.Button(presetNames[index], presetLoad[index]);
                         panel.Button("x", presetDelete[index]);
                     });
+                }
+            });
+        }
+
+        private void DrawReplay(Panel panel)
+        {
+            if (ReplaySession.Player is ReplayPlayer replay)
+            {
+                DrawReplayPlayback(panel, replay);
+                return;
+            }
+            if (ReplaySession.IsRecording)
+            {
+                panel.Label($"Recording {ReplayTimeline.Format(ReplaySession.RecordedSeconds)} / {ReplayTimeline.Format(ReplaySession.MaxSeconds)}");
+                panel.Button("Stop Recording", ReplaySession.StopRecording);
+                return;
+            }
+            panel.Button("Record", ReplaySession.StartRecording, !ReplaySession.IsLoading);
+            if (ReplaySession.IsSaving) panel.Label("Saving replay...");
+            if (ReplaySession.IsLoading) panel.Label($"Loading {ReplaySession.LoadingName}...");
+            DrawSavedReplays(panel);
+        }
+
+        private void DrawSavedReplays(Panel panel)
+        {
+            string[] names = ReplaySession.SavedReplays;
+            if (names.Length == 0)
+            {
+                panel.Label("No saved replays.");
+                return;
+            }
+            replayListScroll = panel.ScrollArea(replayListScroll, ListHeight, names.Length, () =>
+            {
+                foreach (string name in names)
+                {
+                    panel.HorizontalArea(() =>
+                    {
+                        panel.Button(name, () => ReplaySession.Play(name), !ReplaySession.IsLoading);
+                        panel.Button("x", () => ReplaySession.Delete(name));
+                    });
+                }
+            });
+        }
+
+        private void DrawReplayPlayback(Panel panel, ReplayPlayer replay)
+        {
+            panel.Label($"{ReplayTimeline.Format(replay.Cursor)} / {ReplayTimeline.Format(replay.Recording.Duration)}");
+            panel.HorizontalArea(() =>
+            {
+                panel.Button(replay.Playing ? "Pause" : "Play", replay.TogglePlaying);
+                panel.Button("Stop", ReplaySession.ExitReplay);
+            });
+            panel.HorizontalArea(() =>
+            {
+                panel.Button("Spectate", () => replay.Freecam = false, replay.Freecam);
+                panel.Button("FreeCam", () => replay.Freecam = true, !replay.Freecam);
+            });
+            panel.HorizontalArea(() =>
+            {
+                panel.Button("Previous", () => replay.SpectateNext(-1));
+                panel.Button("Next", () => replay.SpectateNext(1));
+            });
+            replay.RigLerp = panel.Slider("Rig Lerp", replay.RigLerp, ReplayPlayer.MinRigLerp, ReplayPlayer.MaxRigLerp);
+            panel.Label(replay.Freecam ? "FreeCam: hold right mouse, WASD to fly" : $"Spectating: {replay.Spectated?.Actor.Name ?? "nobody"}");
+            IReadOnlyList<ReplayPuppet> puppets = replay.Puppets;
+            replayScroll = panel.ScrollArea(replayScroll, ListHeight, puppets.Count, () =>
+            {
+                for (int i = 0; i < puppets.Count; i++)
+                {
+                    int index = i;
+                    panel.Button(puppets[i].Actor.Name, () => replay.Spectate(index), puppets[i].Visible && !replay.IsSpectating(puppets[i]));
                 }
             });
         }

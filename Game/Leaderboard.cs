@@ -4,6 +4,7 @@
 
 using GenneCaster.Base;
 using GenneCaster.Player;
+using GenneCaster.Replay;
 using Photon.Pun;
 using TMPro;
 using UnityEngine;
@@ -41,7 +42,7 @@ namespace GenneCaster.Game
         private int appliedFont = -1;
         private bool failed;
 
-        private static bool Active => enabled && PhotonNetwork.InRoom;
+        private static bool Active => enabled && (PhotonNetwork.InRoom || ReplaySession.IsReplaying);
 
         internal void LateUpdate()
         {
@@ -85,11 +86,19 @@ namespace GenneCaster.Game
             root.anchoredPosition = basePos + new Vector2(CasterConfig.LeaderboardOffsetX.Value, CasterConfig.LeaderboardOffsetY.Value);
             ApplyFontIfChanged();
 
-            VRRig[] rigs = NetworkedPlayerManager.activeRigs ?? Array.Empty<VRRig>();
             bool showIcons = CasterConfig.LeaderboardPlatformIcons.Value;
             bool showFps = CasterConfig.LeaderboardFps.Value;
-            VRRig? selected = NetworkedPlayerManager.selectedPlayer;
+            int shown = ReplaySession.Player is ReplayPlayer replay
+                ? ShowReplay(replay, showFps, showIcons)
+                : ShowLive(showFps, showIcons);
+            for (int i = shown; i < rows.Count; i++)
+                if (rows[i].Go.activeSelf) rows[i].Go.SetActive(false);
+        }
 
+        private int ShowLive(bool showFps, bool showIcons)
+        {
+            VRRig[] rigs = NetworkedPlayerManager.activeRigs ?? Array.Empty<VRRig>();
+            VRRig? selected = NetworkedPlayerManager.selectedPlayer;
             int shown = 0;
             int otherIndex = 0;
             for (int i = 0; i < rigs.Length; i++)
@@ -98,42 +107,51 @@ namespace GenneCaster.Game
                 if (rig == null || rig.isOfflineVRRig) continue;
                 int keyOrdinal = otherIndex++;
                 if (rig.Creator == null) continue;
-
-                Row row = GetRow(shown);
-                string number = KeyLabel(keyOrdinal);
-                if (row.Number.text != number) row.Number.text = number;
-
-                string nick = rig.Creator.NickName ?? "Player";
-                if (row.Name.text != nick) row.Name.text = nick;
-                Color color = IsTagged(rig) ? TaggedColor : Color.white;
-                if (row.Name.color != color) row.Name.color = color;
-                FontStyles style = rig == selected ? FontStyles.Bold : FontStyles.Normal;
-                if (row.Name.fontStyle != style) row.Name.fontStyle = style;
-
-                if (row.Fps.gameObject.activeSelf != showFps) row.Fps.gameObject.SetActive(showFps);
-                if (showFps)
-                {
-                    int fps = Mathf.RoundToInt(NetworkedPlayerManager.GetFPS(rig));
-                    if (fps != row.FpsValue)
-                    {
-                        row.FpsValue = fps;
-                        row.Fps.text = $"{fps} FPS";
-                        row.Fps.color = FpsColor(fps);
-                    }
-                }
-
-                Sprite? icon = null;
-                if (showIcons)
-                {
-                    int platform = NetworkedPlayerManager.GetPlatform(rig);
-                    icon = platform == 1 ? AssetManager.smallMetaSprite : platform == 2 ? AssetManager.smallSteamSprite : null;
-                }
-                if (row.Platform.sprite != icon) row.Platform.sprite = icon;
-                if (row.Platform.enabled != (icon != null)) row.Platform.enabled = icon != null;
-                shown++;
+                int fps = showFps ? Mathf.RoundToInt(NetworkedPlayerManager.GetFPS(rig)) : 0;
+                int platform = showIcons ? NetworkedPlayerManager.GetPlatform(rig) : 0;
+                Fill(GetRow(shown++), keyOrdinal, rig.Creator.NickName ?? "Player", IsTagged(rig), rig == selected, showFps, fps, platform);
             }
-            for (int i = shown; i < rows.Count; i++)
-                if (rows[i].Go.activeSelf) rows[i].Go.SetActive(false);
+            return shown;
+        }
+
+        private int ShowReplay(ReplayPlayer replay, bool showFps, bool showIcons)
+        {
+            ReplayPuppet? selected = replay.Spectated;
+            int shown = 0;
+            int otherIndex = 0;
+            foreach (ReplayPuppet puppet in replay.Puppets)
+            {
+                if (puppet.Actor.IsLocal) continue;
+                int keyOrdinal = otherIndex++;
+                if (!puppet.Visible) continue;
+                ActorFrame frame = puppet.Current;
+                int platform = showIcons ? puppet.Actor.Platform : 0;
+                Fill(GetRow(shown++), keyOrdinal, puppet.Actor.Name, frame.Tag != ReplayTagState.None, puppet == selected, showFps, frame.Fps, platform);
+            }
+            return shown;
+        }
+
+        private static void Fill(Row row, int keyOrdinal, string name, bool tagged, bool selected, bool showFps, int fps, int platform)
+        {
+            string number = KeyLabel(keyOrdinal);
+            if (row.Number.text != number) row.Number.text = number;
+            if (row.Name.text != name) row.Name.text = name;
+            Color color = tagged ? TaggedColor : Color.white;
+            if (row.Name.color != color) row.Name.color = color;
+            FontStyles style = selected ? FontStyles.Bold : FontStyles.Normal;
+            if (row.Name.fontStyle != style) row.Name.fontStyle = style;
+
+            if (row.Fps.gameObject.activeSelf != showFps) row.Fps.gameObject.SetActive(showFps);
+            if (showFps && fps != row.FpsValue)
+            {
+                row.FpsValue = fps;
+                row.Fps.text = $"{fps} FPS";
+                row.Fps.color = FpsColor(fps);
+            }
+
+            Sprite? icon = platform == 1 ? AssetManager.smallMetaSprite : platform == 2 ? AssetManager.smallSteamSprite : null;
+            if (row.Platform.sprite != icon) row.Platform.sprite = icon;
+            if (row.Platform.enabled != (icon != null)) row.Platform.enabled = icon != null;
         }
 
         private static string KeyLabel(int otherIndex) => otherIndex < 9 ? (otherIndex + 1).ToString() : string.Empty;

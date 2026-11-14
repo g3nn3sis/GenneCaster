@@ -3,6 +3,7 @@
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
 using GenneCaster.Base;
+using GenneCaster.Replay;
 using GorillaLocomotion;
 using HarmonyLib;
 using Photon.Pun;
@@ -36,6 +37,7 @@ namespace GenneCaster.Player
         internal static int selectedPlayerIndex;
         internal static bool registerNewRigs { get => CasterConfig.RegisterNewRigs.Value; set => CasterConfig.RegisterNewRigs.Value = value; }
         internal static float bodyLerping { get => CasterConfig.BodyLerping.Value; set => CasterConfig.BodyLerping.Value = value; }
+        private const float RawLerp = 1f;
 
         internal void Start()
         {
@@ -54,16 +56,12 @@ namespace GenneCaster.Player
             }
             if (selectedPlayer == null) SwitchPlayerIndex(0);
             else if (!rigs.Contains(selectedPlayer)) SwitchPlayerIndex(selectedPlayerIndex - 1);
+            if (ReplaySession.IsReplaying) return;
 
-            if (CasterConfig.KeyPressed(Key.Digit0))
+            if (TryReadPlayerKey(out int otherIndex))
             {
-                SelectLocalPlayer();
-                return;
-            }
-            for (int i = 0; i < OtherPlayerKeys.Length; i++)
-            {
-                if (!CasterConfig.KeyPressed(OtherPlayerKeys[i])) continue;
-                SelectOtherPlayer(i);
+                if (otherIndex == LocalPlayerKey) SelectLocalPlayer();
+                else SelectOtherPlayer(otherIndex);
                 return;
             }
             if (CasterConfig.KeyPressed(CasterConfig.NextPlayerKey))
@@ -76,6 +74,21 @@ namespace GenneCaster.Player
             }
         }
 
+        internal const int LocalPlayerKey = -1;
+
+        internal static bool TryReadPlayerKey(out int otherIndex)
+        {
+            otherIndex = LocalPlayerKey;
+            if (CasterConfig.KeyPressed(Key.Digit0)) return true;
+            for (int i = 0; i < OtherPlayerKeys.Length; i++)
+            {
+                if (!CasterConfig.KeyPressed(OtherPlayerKeys[i])) continue;
+                otherIndex = i;
+                return true;
+            }
+            return false;
+        }
+
         private void PollNewRigs()
         {
             if (!registerNewRigs) return;
@@ -85,6 +98,15 @@ namespace GenneCaster.Player
                 ApplyBodyLerping();
             }
             catch (Exception e) { Log.ExceptionOnce("poll-rigs", e, "Reading the active rigs failed"); }
+        }
+
+        internal static float LiveRigLerp
+        {
+            get
+            {
+                VRRig? local = GorillaTagger.Instance != null ? GorillaTagger.Instance.offlineVRRig : null;
+                return local != null ? local.lerpValueBody * bodyLerping : RawLerp;
+            }
         }
 
         private static void ApplyBodyLerping()

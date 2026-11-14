@@ -4,11 +4,12 @@
 
 using BepInEx.Configuration;
 using GenneCaster.Base;
+using GenneCaster.Replay;
 using UnityEngine;
 
 namespace GenneCaster.UI
 {
-    internal enum PanelId { Main, Universal, Wasd, Camera, PlayerSettings, Time, MapLoader, Player, Nametag, Theme, MiniMap, Leaderboard, ClosestLava, Scoreboard, KillFeed, Presets, Count }
+    internal enum PanelId { Main, Universal, Wasd, Camera, PlayerSettings, Time, MapLoader, Player, Nametag, Theme, MiniMap, Leaderboard, ClosestLava, Scoreboard, KillFeed, Presets, Replay, Count }
 
     internal sealed class PanelOrchestrator : IDisposable
     {
@@ -21,23 +22,27 @@ namespace GenneCaster.UI
         {
             "GenneCaster", "Universal", "WASD", "Camera Manager", "Player Settings", "Time Manager",
             "Map Loader", "Player Manager", "NameTag Manager", "Theme Loader", "MiniMap Manager",
-            "Leaderboard", "Closest Lava", "Scoreboard", "Kill Feed", "Presets"
+            "Leaderboard", "Closest Lava", "Scoreboard", "Kill Feed", "Presets", "Replay"
         };
 
         private static readonly PanelId[][] Columns =
         {
-            new[] { PanelId.Main, PanelId.Universal, PanelId.Wasd, PanelId.Presets },
-            new[] { PanelId.Camera, PanelId.PlayerSettings },
+            new[] { PanelId.Main, PanelId.Universal, PanelId.Wasd, PanelId.Replay },
+            new[] { PanelId.Camera, PanelId.PlayerSettings, PanelId.Presets },
             new[] { PanelId.Time, PanelId.Player, PanelId.Scoreboard },
             new[] { PanelId.MapLoader, PanelId.Nametag, PanelId.Leaderboard },
             new[] { PanelId.Theme, PanelId.MiniMap, PanelId.ClosestLava, PanelId.KillFeed }
         };
+
+        private static readonly PanelId[] ReplayFirstColumn =
+            new[] { PanelId.Replay }.Concat(Columns[0].Where(id => id != PanelId.Replay)).ToArray();
 
         private readonly Panel[] panels = new Panel[(int)PanelId.Count];
         private readonly ConfigEntry<string>[] positions = new ConfigEntry<string>[(int)PanelId.Count];
         private readonly bool[] customPosition = new bool[(int)PanelId.Count];
         private readonly Action<Panel>[] drawContent;
         private bool placed;
+        private bool replayLayout;
 
         internal PanelOrchestrator()
         {
@@ -70,25 +75,37 @@ namespace GenneCaster.UI
         {
             float blend = placed ? 1f - Mathf.Exp(-PositionDamping * dt) : 1f;
             placed = true;
+            bool replaying = SyncReplayLayout();
+            float top = replaying ? ReplayTimeline.Bottom + Gap : Margin;
             for (int column = 0; column < Columns.Length; column++)
+                PlaceColumn(replaying && column == 0 ? ReplayFirstColumn : Columns[column], Margin + column * (PanelWidth + Gap), top, blend);
+        }
+
+        private bool SyncReplayLayout()
+        {
+            bool replaying = ReplaySession.IsReplaying;
+            if (replaying && !replayLayout) panels[(int)PanelId.Replay].Enabled = true;
+            replayLayout = replaying;
+            return replaying;
+        }
+
+        private void PlaceColumn(PanelId[] column, float x, float top, float blend)
+        {
+            float y = top;
+            foreach (PanelId id in column)
             {
-                float x = Margin + column * (PanelWidth + Gap);
-                float y = Margin;
-                foreach (PanelId id in Columns[column])
+                int i = (int)id;
+                if (customPosition[i]) continue;
+                Panel panel = panels[i];
+                var goal = new Vector2(x, y);
+                if (panel.Enabled)
                 {
-                    int i = (int)id;
-                    if (customPosition[i]) continue;
-                    Panel panel = panels[i];
-                    var goal = new Vector2(x, y);
-                    if (panel.Enabled)
-                    {
-                        panel.SetPosition(Vector2.Lerp(panel.Rect.position, goal, blend));
-                        y += panel.Rect.height + Gap;
-                    }
-                    else
-                    {
-                        panel.SetPosition(goal);
-                    }
+                    panel.SetPosition(Vector2.Lerp(panel.Rect.position, goal, blend));
+                    y += panel.Rect.height + Gap;
+                }
+                else
+                {
+                    panel.SetPosition(goal);
                 }
             }
         }

@@ -15,6 +15,52 @@ namespace GenneCaster.Game
         internal static void StartRain() => SetWeather(BetterDayNightManager.WeatherType.Raining);
         internal static void StopRain() => SetWeather(BetterDayNightManager.WeatherType.None);
 
+        internal sealed class Snapshot
+        {
+            internal int TimeIndex;
+            internal BetterDayNightManager.WeatherType[] WeatherCycle = Array.Empty<BetterDayNightManager.WeatherType>();
+        }
+
+        internal static bool TryReadEnvironment(out int timeIndex, out bool raining)
+        {
+            BetterDayNightManager? manager = BetterDayNightManager.instance;
+            timeIndex = 0;
+            raining = false;
+            if (manager == null) return false;
+            timeIndex = manager.currentTimeIndex;
+            BetterDayNightManager.WeatherType[]? cycle = manager.weatherCycle;
+            int weather = manager.currentWeatherIndex;
+            raining = cycle != null && weather >= 0 && weather < cycle.Length && cycle[weather] == BetterDayNightManager.WeatherType.Raining;
+            return true;
+        }
+
+        internal static Snapshot? Capture()
+        {
+            BetterDayNightManager? manager = BetterDayNightManager.instance;
+            if (manager == null) return null;
+            return new Snapshot
+            {
+                TimeIndex = manager.currentTimeIndex,
+                WeatherCycle = manager.weatherCycle != null ? (BetterDayNightManager.WeatherType[])manager.weatherCycle.Clone() : Array.Empty<BetterDayNightManager.WeatherType>(),
+            };
+        }
+
+        internal static void Apply(int timeIndex, bool raining)
+        {
+            if (BetterDayNightManager.instance == null) return;
+            SetTime(timeIndex);
+            SetWeather(raining ? BetterDayNightManager.WeatherType.Raining : BetterDayNightManager.WeatherType.None);
+        }
+
+        internal static void Restore(Snapshot snapshot)
+        {
+            BetterDayNightManager? manager = BetterDayNightManager.instance;
+            if (manager == null) return;
+            SetTime(snapshot.TimeIndex);
+            if (manager.weatherCycle == null || manager.weatherCycle.Length != snapshot.WeatherCycle.Length) return;
+            Array.Copy(snapshot.WeatherCycle, manager.weatherCycle, snapshot.WeatherCycle.Length);
+        }
+
         private static void SetTime(int index)
         {
             BetterDayNightManager? manager = BetterDayNightManager.instance;

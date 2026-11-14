@@ -8,18 +8,11 @@ namespace GenneCaster.Base
 {
     internal static class Presets
     {
-        private const string FolderName = "GenneCaster-presets";
-        private const string Extension = ".cfg";
+        private const string Extension = DataFolders.ConfigExtension;
 
-        internal static string? Directory
-        {
-            get
-            {
-                string? config = CasterConfig.ConfigFilePath;
-                string? dir = config != null ? Path.GetDirectoryName(config) : null;
-                return dir != null ? Path.Combine(dir, FolderName) : null;
-            }
-        }
+        internal static string? Directory => DataFolders.Configs;
+
+        internal static bool IsReserved(string name) => string.Equals(name, DataFolders.DefaultConfigName, StringComparison.OrdinalIgnoreCase);
 
         internal static string[] Names()
         {
@@ -27,9 +20,10 @@ namespace GenneCaster.Base
             if (dir == null || !System.IO.Directory.Exists(dir)) return Array.Empty<string>();
             try
             {
-                string[] files = System.IO.Directory.GetFiles(dir, "*" + Extension);
-                var names = new string[files.Length];
-                for (int i = 0; i < files.Length; i++) names[i] = Path.GetFileNameWithoutExtension(files[i]);
+                string[] names = System.IO.Directory.GetFiles(dir, "*" + Extension)
+                    .Select(Path.GetFileNameWithoutExtension)
+                    .Where(n => !IsReserved(n))
+                    .ToArray();
                 Array.Sort(names, StringComparer.OrdinalIgnoreCase);
                 return names;
             }
@@ -45,7 +39,7 @@ namespace GenneCaster.Base
             string name = Sanitize(rawName);
             string? dir = Directory;
             string? live = CasterConfig.ConfigFilePath;
-            if (name.Length == 0 || dir == null || live == null) return false;
+            if (name.Length == 0 || IsReserved(name) || dir == null || live == null) return false;
             try
             {
                 CasterConfig.ForceSave();
@@ -85,7 +79,7 @@ namespace GenneCaster.Base
         internal static void Delete(string name)
         {
             string? dir = Directory;
-            if (dir == null) return;
+            if (dir == null || IsReserved(name)) return;
             string path = Path.Combine(dir, name + Extension);
             try
             {

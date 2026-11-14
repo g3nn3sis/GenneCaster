@@ -34,6 +34,7 @@ namespace GenneCaster.Base
         internal static ConfigEntry<Key> PushToTalkKey = null!;
         internal static ConfigEntry<Key> NextPlayerKey = null!;
         internal static ConfigEntry<Key> PreviousPlayerKey = null!;
+        internal static ConfigEntry<Key> ReplayPauseKey = null!;
 
         internal static ConfigEntry<bool> Wasd = null!;
         internal static ConfigEntry<bool> MouseClick = null!;
@@ -121,6 +122,7 @@ namespace GenneCaster.Base
             PushToTalkKey = config.Bind("Camera", "Hold To Talk Key", Key.V, "Hold to open the mic to all chat; release returns to the Microphone setting (push to talk by default).");
             NextPlayerKey = config.Bind("Camera", "Next Player Key", Key.RightBracket, "Spectate the next player in the list.");
             PreviousPlayerKey = config.Bind("Camera", "Previous Player Key", Key.LeftBracket, "Spectate the previous player in the list.");
+            ReplayPauseKey = config.Bind("Replay", "Pause Key", Key.P, "Pause and unpause the replay while in replay mode.");
 
             Wasd = config.Bind("Freecam", "Enabled", false, "Hold right mouse to fly your own player with WASD. Turned off while the camera is in Freecam mode.");
             MouseClick = config.Bind("Freecam", "Mouse Click", false, "Left click presses whatever is under the cursor with the right hand.");

@@ -32,6 +32,7 @@ Each release is built against the Gorilla Tag version that was current when it w
 | Scoreboard | Top-center two-team scoreboard with a central match timer, all under the same theme. You set the team names and scores from its panel; the timer runs a 10 second pre-roll (orange, shown negative) then counts up in white and stops at 3:00, with start/pause and reset. Enable, scale, position offset, font |
 | Kill Feed | Top-right stack of rounded pills that announces each player the moment they are tagged — their name in orange next to a `TAGGED` label — with the newest on top, up to five at once, each fading in and out after a few seconds. Enable, scale, position offset, font |
 | Presets | Save the current settings as named presets and load or delete them later; toggle autosave and save settings on demand |
+| Replay | Record the match — every player's body and hand movement, time of day and rain, joins, leaves and tags, and other players' voice chat — for up to 60 minutes; stopping saves it to a file, and saved replays are listed to play or delete. In replay mode every panel stays open so you can change camera, nametag, theme and other casting settings while you watch; the panels move down under a timeline bar across the top, with the Replay panel first in the left column. The bar has play/pause, drag to scrub, event markers (tags orange, joins green, leaves grey, time/weather blue) with hover details, and the spectated player's voice activity under the track. Spectate any recorded player (orbit or first person) or fly a FreeCam while they move. Recording never changes what you see live: alongside each player's body it stores their raw networked position, head and hands (the highest rig lerp), so you can keep adjusting Rig Interpolation while casting. In replay mode the Replay panel's Rig Lerp slider (0.01 to 1, starting at your live interpolation) re-applies the lerp locally to those raw targets, where 1 is raw and lower values are smoother, and the head and arms are re-posed to follow them. The Leaderboard, Closest Lava and Kill Feed overlays and the Scoreboard keep working in replay mode, showing the recorded players, distances and tags at the current point in the replay (the MiniMap is hidden). Recorded players get the same nametags as live casting (font, player or tag color, FPS and platform icon as they were at that moment); Stop leaves replay mode and restores the live game |
 
 The Leaderboard, Closest Lava, Scoreboard and Kill Feed overlays are Unity canvases loaded from an asset bundle embedded in the DLL, so they render at the same size on any resolution. They all share one font, picked from the game's fonts with the Previous/Next Font buttons in any of their panels.
 
@@ -42,9 +43,10 @@ Panels stack themselves into columns until you drag one. Dragged positions are s
 | Input | Action |
 | --- | --- |
 | `Esc` | Show or hide the panels (configurable) |
-| `0` | Spectate the local player (yourself) |
-| `1` to `9` | Spectate the first nine other players |
-| `]` and `[` | Spectate the next or previous player (configurable) |
+| `0` | Spectate the local player (yourself); in replay mode, your recorded player |
+| `1` to `9` | Spectate the first nine other players; in replay mode, the recorded players with those leaderboard numbers |
+| `]` and `[` | Spectate the next or previous player (configurable); in replay mode, the next or previous recorded player |
+| `P` | Pause and unpause the replay in replay mode (configurable) |
 | `V` (held) | Hold to talk in all chat; release returns to the Microphone setting (configurable) |
 | `B` `N` `M` | Scoreboard timer: start, pause, reset (configurable) |
 | `H` `J` / `K` `L` | Scoreboard: team A score up/down, team B score up/down (configurable) |
@@ -57,9 +59,11 @@ Panels stack themselves into columns until you drag one. Dragged positions are s
 
 ## Configuration
 
-Settings are saved to `Gorilla Tag\BepInEx\config\com.gennesis.gennecaster.cfg` a second after you change them, and when the game closes. Turn **Autosave** off in the Presets panel to stop that; settings are then written only when you press **Save Settings** or save a preset. The file holds only section headers and `Key = value` lines, with no comments. You can edit it while the game is closed; a value outside a setting's allowed range is clamped when the game loads it.
+Settings are saved to `Gorilla Tag\GenneCaster\Configs\Default.cfg` a second after you change them, and when the game closes. Turn **Autosave** off in the Presets panel to stop that; settings are then written only when you press **Save Settings** or save a preset. The file holds only section headers and `Key = value` lines, with no comments. You can edit it while the game is closed; a value outside a setting's allowed range is clamped when the game loads it.
 
-Presets are stored as `.cfg` files in a `GenneCaster-presets` folder next to the config. Loading one applies it immediately, including the panel theme and layout.
+Presets are stored as `.cfg` files next to `Default.cfg` in `Gorilla Tag\GenneCaster\Configs` (`Default` is reserved for the live settings). Loading one applies it immediately, including the panel theme and layout. On first launch, an existing config and presets from `BepInEx\config` are moved there automatically.
+
+Replays are saved as compressed `.gcreplay` files in `Gorilla Tag\GenneCaster\Replays`, named by the date and time recording stopped. The Replay panel lists them to play or delete.
 
 ## Troubleshooting
 

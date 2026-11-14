@@ -17,7 +17,7 @@ namespace GenneCaster.Base
         void Awake()
         {
             Log.Init(Logger);
-            CasterConfig.Bind(Config);
+            CasterConfig.Bind(ConfigStorage.Open(Config.ConfigFilePath, MetadataHelper.GetMetadata(this)));
             Log.Info($"{PluginInfo.Name} v{PluginInfo.Version} loaded.");
         }
 

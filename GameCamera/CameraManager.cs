@@ -5,6 +5,7 @@
 using GenneCaster.Base;
 using GenneCaster.GameCamera.Modes;
 using GenneCaster.Player;
+using GenneCaster.Replay;
 using UnityEngine;
 
 namespace GenneCaster.GameCamera
@@ -36,9 +37,12 @@ namespace GenneCaster.GameCamera
             }
         }
 
+        private static CameraMode ActiveMode =>
+            ReplaySession.Player is ReplayPlayer replay ? (replay.Freecam ? CameraMode.Freecam : CameraMode.Spectator) : mode;
+
         private void SwitchMode(CameraWrapper camera)
         {
-            CameraMode next = mode;
+            CameraMode next = ActiveMode;
             if (runningMode == next) return;
             if (runningMode == CameraMode.Freecam) FreecamCamera.Exit();
             if (next == CameraMode.Freecam) FreecamCamera.Enter(camera);
@@ -53,10 +57,23 @@ namespace GenneCaster.GameCamera
 
         private static void RunSpectator(CameraWrapper camera)
         {
+            if (ReplaySession.Player is ReplayPlayer replay)
+            {
+                RunReplaySpectator(camera, replay);
+                return;
+            }
             VRRig? target = NetworkedPlayerManager.selectedPlayer;
             if (target == null) return;
             try { SpectatorCamera.Run(camera, target); }
             catch (Exception e) { Log.ExceptionOnce("spectator-camera", e, "Moving the spectator camera failed"); }
+        }
+
+        private static void RunReplaySpectator(CameraWrapper camera, ReplayPlayer replay)
+        {
+            ReplayPuppet? target = replay.Spectated;
+            if (target == null) return;
+            try { SpectatorCamera.Run(camera, target.Body, target.Eyes); }
+            catch (Exception e) { Log.ExceptionOnce("replay-camera", e, "Moving the replay camera failed"); }
         }
 
         private static void RunFreecam(CameraWrapper camera)

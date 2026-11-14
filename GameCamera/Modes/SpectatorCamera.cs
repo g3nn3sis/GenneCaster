@@ -25,17 +25,19 @@ namespace GenneCaster.GameCamera.Modes
             OrbitPitch = 0f;
         }
 
-        internal static void Run(CameraWrapper camera, VRRig target)
+        internal static void Run(CameraWrapper camera, VRRig target) => Run(camera, target.transform, HeadView.Eyes(target));
+
+        internal static void Run(CameraWrapper camera, Transform body, Pose eyes)
         {
             float deltaTime = Time.deltaTime;
             ReadOrbitInput(deltaTime);
             if (IsFirstPerson)
             {
-                HeadView.Follow(camera, target);
+                HeadView.Follow(camera, eyes);
                 return;
             }
-            Vector3 pivot = target.transform.position;
-            Quaternion orbit = Quaternion.Euler(OrbitPitch, target.transform.eulerAngles.y + OrbitYaw, 0f);
+            Vector3 pivot = body.position;
+            Quaternion orbit = Quaternion.Euler(OrbitPitch, body.eulerAngles.y + OrbitYaw, 0f);
             Vector3 desired = pivot + orbit * Vector3.back * (HeadDistance * OrbitDistanceScale);
             Quaternion look = Quaternion.LookRotation(pivot - desired, Vector3.up);
             float positionStep = Smoothing.Step(CasterConfig.PositionSmoothing.Value, deltaTime);

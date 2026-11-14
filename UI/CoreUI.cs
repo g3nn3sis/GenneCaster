@@ -3,6 +3,7 @@
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
 using GenneCaster.Base;
+using GenneCaster.Replay;
 using UnityEngine;
 
 namespace GenneCaster.UI
@@ -12,6 +13,7 @@ namespace GenneCaster.UI
         private const float OpenDuration = 0.18f;
 
         private PanelOrchestrator? panels;
+        private ReplayTimeline? timeline;
         private float openProgress;
         internal static bool Visible = true;
 
@@ -29,6 +31,7 @@ namespace GenneCaster.UI
 
         internal void OnGUI()
         {
+            ReplayPlayer? replay = ReplaySession.Player;
             if (panels == null || openProgress <= 0f) return;
             float eased = Mathf.SmoothStep(0f, 1f, openProgress);
             Matrix4x4 previousMatrix = GUI.matrix;
@@ -37,7 +40,11 @@ namespace GenneCaster.UI
             UiScale.Begin();
             GUI.color = new Color(previousColor.r, previousColor.g, previousColor.b, previousColor.a * eased);
             GUI.enabled = previousEnabled && Visible;
-            try { panels.Draw(); }
+            try
+            {
+                if (replay != null) (timeline ??= new ReplayTimeline()).Draw(replay);
+                panels.Draw();
+            }
             finally
             {
                 GUI.matrix = previousMatrix;
@@ -50,6 +57,8 @@ namespace GenneCaster.UI
         {
             panels?.Dispose();
             panels = null;
+            timeline?.Dispose();
+            timeline = null;
             base.OnDestroy();
         }
     }

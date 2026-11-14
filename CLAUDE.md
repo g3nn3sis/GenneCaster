@@ -37,6 +37,7 @@ Base/            Plugin bootstrap: BaseLoader, ObjectComponent, HarmonyPatches, 
 Game/            On-screen/game features: NameTag, MiniMap, Leaderboard, Scoreboard, ClosestLava, KillFeed, TimeManager, assets
 Player/          Local + networked player: controllers, rig list, platform detection
 GameCamera/      Spectator/free camera: CameraManager, wrapper, smoothing, Modes/
+Replay/          Replay recorder and playback: ReplaySession, recorder, puppets, voice capture
 UI/              IMGUI panel system: CoreUI, PanelOrchestrator, Panel, PanelContent, theming, scaling
 DiscordRichPresence/  Mod-side Discord integration
 Patches/         Harmony patches

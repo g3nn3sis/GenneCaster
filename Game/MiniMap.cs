@@ -4,6 +4,7 @@
 
 using GenneCaster.Base;
 using GenneCaster.Player;
+using GenneCaster.Replay;
 using Photon.Pun;
 using UnityEngine;
 
@@ -30,7 +31,7 @@ namespace GenneCaster.Game
             CasterConfig.MiniMapOffsetY.Value = (float)CasterConfig.MiniMapOffsetY.DefaultValue;
         }
 
-        private static bool Active => enabled && PhotonNetwork.InRoom && NetworkedPlayerManager.selectedPlayer != null;
+        private static bool Active => enabled && PhotonNetwork.InRoom && NetworkedPlayerManager.selectedPlayer != null && !ReplaySession.IsReplaying;
 
         internal void Start()
         {

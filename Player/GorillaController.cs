@@ -4,6 +4,7 @@
 
 using GenneCaster.Base;
 using GenneCaster.GameCamera;
+using GenneCaster.Replay;
 using GorillaLocomotion;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -51,7 +52,7 @@ namespace GenneCaster.Player
             if (player == null || tagger == null || tagger.offlineVRRig == null || mouse == null || keyboard == null) return;
             try
             {
-                bool fly = wasd && mouse.rightButton.isPressed;
+                bool fly = wasd && !ReplaySession.IsReplaying && mouse.rightButton.isPressed;
                 if (fly != flying) SetFlying(fly, tagger);
                 if (fly) Fly(player, tagger, mouse, keyboard);
             }
