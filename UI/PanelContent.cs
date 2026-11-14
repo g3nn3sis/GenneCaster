@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
+using BepInEx.Configuration;
 using GenneCaster.Base;
 using GenneCaster.Game;
 using GenneCaster.GameCamera;
@@ -60,12 +61,10 @@ namespace GenneCaster.UI
             playerName = LocalPlayerManager.NormalizeName(CasterConfig.PlayerName.Value);
         }
 
-        private static string OnOff(bool value) => value ? "On" : "Off";
-
         private void DrawMain(Panel panel)
         {
-            panel.Button($"Panels: {OnOff(owner.IsVisible(PanelId.Universal))}", () => owner.Toggle(PanelId.Universal));
-            panel.Button($"WASD Panel: {OnOff(owner.IsVisible(PanelId.Wasd))}", () => owner.Toggle(PanelId.Wasd));
+            owner.DrawSwitch(panel, PanelId.Universal);
+            owner.DrawSwitch(panel, PanelId.Wasd);
             panel.Label(RoomStatus());
             panel.Label("Room Code");
             roomToJoin = panel.TextField(roomToJoin, LocalPlayerManager.MaxNameLength, LocalPlayerManager.NormalizeName);
@@ -84,20 +83,7 @@ namespace GenneCaster.UI
 
         private void DrawUniversal(Panel panel)
         {
-            panel.Button("Camera Manager", () => owner.Toggle(PanelId.Camera));
-            panel.Button("Player Settings", () => owner.Toggle(PanelId.PlayerSettings));
-            panel.Button("Time Manager", () => owner.Toggle(PanelId.Time));
-            panel.Button("Map Loader", () => owner.Toggle(PanelId.MapLoader));
-            panel.Button("Player Manager", () => owner.Toggle(PanelId.Player));
-            panel.Button("NameTag Manager", () => owner.Toggle(PanelId.Nametag));
-            panel.Button("Theme Loader", () => owner.Toggle(PanelId.Theme));
-            panel.Button("MiniMap Manager", () => owner.Toggle(PanelId.MiniMap));
-            panel.Button("Leaderboard", () => owner.Toggle(PanelId.Leaderboard));
-            panel.Button("Closest Lava", () => owner.Toggle(PanelId.ClosestLava));
-            panel.Button("Scoreboard", () => owner.Toggle(PanelId.Scoreboard));
-            panel.Button("Kill Feed", () => owner.Toggle(PanelId.KillFeed));
-            panel.Button("Presets", () => owner.Toggle(PanelId.Presets));
-            panel.Button("Replay", () => owner.Toggle(PanelId.Replay));
+            owner.DrawSwitches(panel);
             panel.Button("Reset Layout", owner.ResetLayout);
         }
 
@@ -159,12 +145,21 @@ namespace GenneCaster.UI
 
         private void DrawTime(Panel panel)
         {
-            panel.Button("Set Morning", TimeManager.SetMorning);
-            panel.Button("Set Day", TimeManager.SetDay);
-            panel.Button("Set Evening", TimeManager.SetEvening);
-            panel.Button("Set Night", TimeManager.SetNight);
-            panel.Button("Start Rain", TimeManager.StartRain);
-            panel.Button("Stop Rain", TimeManager.StopRain);
+            panel.HorizontalArea(() =>
+            {
+                panel.Button("Morning", TimeManager.SetMorning);
+                panel.Button("Day", TimeManager.SetDay);
+            });
+            panel.HorizontalArea(() =>
+            {
+                panel.Button("Evening", TimeManager.SetEvening);
+                panel.Button("Night", TimeManager.SetNight);
+            });
+            panel.HorizontalArea(() =>
+            {
+                panel.Button("Start Rain", TimeManager.StartRain);
+                panel.Button("Stop Rain", TimeManager.StopRain);
+            });
         }
 
         private void DrawMapLoader(Panel panel)
@@ -198,24 +193,11 @@ namespace GenneCaster.UI
 
         private void DrawNametag(Panel panel)
         {
-            panel.Label($"Font: {AssetManager.FontName(NameTag.currentFontIndex)}");
-            panel.HorizontalArea(() =>
-            {
-                panel.Button("Previous Font", () => ShiftFont(-1));
-                panel.Button("Next Font", () => ShiftFont(1));
-            });
             NameTag.enabled = panel.Toggle("NameTags", NameTag.enabled);
             NameTag.usePlayerColor = panel.Toggle("Player Color", NameTag.usePlayerColor);
             NameTag.hzDisplay = panel.Toggle("Player FPS", NameTag.hzDisplay);
             NameTag.platformIndicator = panel.Toggle("Platform Indicator", NameTag.platformIndicator);
-        }
-
-        private static void ShiftFont(int amount)
-        {
-            int count = AssetManager.discoveredFonts.Length;
-            if (count == 0) return;
-            int current = Mathf.Clamp(NameTag.currentFontIndex, 0, count - 1);
-            NameTag.currentFontIndex = (current + count + amount) % count;
+            NameTag.currentFontIndex = FontPicker(panel, NameTag.currentFontIndex);
         }
 
         private void DrawTheme(Panel panel)
@@ -242,27 +224,21 @@ namespace GenneCaster.UI
             Leaderboard.enabled = panel.Toggle("Leaderboard", Leaderboard.enabled);
             CasterConfig.LeaderboardPlatformIcons.Value = panel.Toggle("Platform Icons", CasterConfig.LeaderboardPlatformIcons.Value);
             CasterConfig.LeaderboardFps.Value = panel.Toggle("Show FPS", CasterConfig.LeaderboardFps.Value);
-            CasterConfig.LeaderboardScale.Value = panel.Slider("Scale", CasterConfig.LeaderboardScale.Value, 0.5f, 2f, "F2", "x");
-            CasterConfig.LeaderboardOffsetX.Value = panel.Slider("Offset X", CasterConfig.LeaderboardOffsetX.Value, -800f, 800f, "F0", "px");
-            CasterConfig.LeaderboardOffsetY.Value = panel.Slider("Offset Y", CasterConfig.LeaderboardOffsetY.Value, -500f, 500f, "F0", "px");
+            HudPlacement(panel, CasterConfig.LeaderboardScale, CasterConfig.LeaderboardOffsetX, CasterConfig.LeaderboardOffsetY);
             DrawHudFont(panel);
         }
 
         private void DrawClosestLava(Panel panel)
         {
             ClosestLava.enabled = panel.Toggle("Closest Lava", ClosestLava.enabled);
-            CasterConfig.ClosestLavaScale.Value = panel.Slider("Scale", CasterConfig.ClosestLavaScale.Value, 0.5f, 2f, "F2", "x");
-            CasterConfig.ClosestLavaOffsetX.Value = panel.Slider("Offset X", CasterConfig.ClosestLavaOffsetX.Value, -800f, 800f, "F0", "px");
-            CasterConfig.ClosestLavaOffsetY.Value = panel.Slider("Offset Y", CasterConfig.ClosestLavaOffsetY.Value, -500f, 500f, "F0", "px");
+            HudPlacement(panel, CasterConfig.ClosestLavaScale, CasterConfig.ClosestLavaOffsetX, CasterConfig.ClosestLavaOffsetY);
             DrawHudFont(panel);
         }
 
         private void DrawScoreboard(Panel panel)
         {
             Scoreboard.enabled = panel.Toggle("Scoreboard", Scoreboard.enabled);
-            CasterConfig.ScoreboardScale.Value = panel.Slider("Scale", CasterConfig.ScoreboardScale.Value, 0.5f, 2f, "F2", "x");
-            CasterConfig.ScoreboardOffsetX.Value = panel.Slider("Offset X", CasterConfig.ScoreboardOffsetX.Value, -800f, 800f, "F0", "px");
-            CasterConfig.ScoreboardOffsetY.Value = panel.Slider("Offset Y", CasterConfig.ScoreboardOffsetY.Value, -500f, 500f, "F0", "px");
+            HudPlacement(panel, CasterConfig.ScoreboardScale, CasterConfig.ScoreboardOffsetX, CasterConfig.ScoreboardOffsetY);
 
             CasterConfig.ScoreboardTeamAName.Value = panel.TextField(CasterConfig.ScoreboardTeamAName.Value, 16);
             panel.HorizontalArea(() =>
@@ -292,28 +268,37 @@ namespace GenneCaster.UI
         private void DrawKillFeed(Panel panel)
         {
             KillFeed.enabled = panel.Toggle("Kill Feed", KillFeed.enabled);
-            CasterConfig.KillFeedScale.Value = panel.Slider("Scale", CasterConfig.KillFeedScale.Value, 0.5f, 2f, "F2", "x");
-            CasterConfig.KillFeedOffsetX.Value = panel.Slider("Offset X", CasterConfig.KillFeedOffsetX.Value, -800f, 800f, "F0", "px");
-            CasterConfig.KillFeedOffsetY.Value = panel.Slider("Offset Y", CasterConfig.KillFeedOffsetY.Value, -500f, 500f, "F0", "px");
+            HudPlacement(panel, CasterConfig.KillFeedScale, CasterConfig.KillFeedOffsetX, CasterConfig.KillFeedOffsetY);
             DrawHudFont(panel);
         }
 
-        private void DrawHudFont(Panel panel)
+        private static void HudPlacement(Panel panel, ConfigEntry<float> scale, ConfigEntry<float> offsetX, ConfigEntry<float> offsetY)
         {
-            panel.Label($"Font: {AssetManager.FontName(CasterConfig.HudFont.Value)}");
-            panel.HorizontalArea(() =>
-            {
-                panel.Button("Previous Font", () => ShiftHudFont(-1));
-                panel.Button("Next Font", () => ShiftHudFont(1));
-            });
+            scale.Value = panel.Slider("Scale", scale.Value, 0.5f, 2f, "F2", "x");
+            offsetX.Value = panel.Slider("Offset X", offsetX.Value, -800f, 800f, "F0", "px");
+            offsetY.Value = panel.Slider("Offset Y", offsetY.Value, -500f, 500f, "F0", "px");
         }
 
-        private static void ShiftHudFont(int amount)
+        private static void DrawHudFont(Panel panel) => CasterConfig.HudFont.Value = FontPicker(panel, CasterConfig.HudFont.Value);
+
+        private static int FontPicker(Panel panel, int fontIndex)
+        {
+            int result = fontIndex;
+            panel.Label($"Font: {AssetManager.FontName(fontIndex)}");
+            panel.HorizontalArea(() =>
+            {
+                panel.Button("Previous Font", () => result = ShiftFont(fontIndex, -1));
+                panel.Button("Next Font", () => result = ShiftFont(fontIndex, 1));
+            });
+            return result;
+        }
+
+        private static int ShiftFont(int fontIndex, int amount)
         {
             int count = AssetManager.discoveredFonts.Length;
-            if (count == 0) return;
-            int current = Mathf.Clamp(CasterConfig.HudFont.Value, 0, count - 1);
-            CasterConfig.HudFont.Value = (current + count + amount) % count;
+            if (count == 0) return fontIndex;
+            int current = Mathf.Clamp(fontIndex, 0, count - 1);
+            return (current + count + amount) % count;
         }
 
         private void DrawPresets(Panel panel)

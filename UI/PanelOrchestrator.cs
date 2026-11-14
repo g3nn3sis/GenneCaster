@@ -20,7 +20,7 @@ namespace GenneCaster.UI
 
         private static readonly string[] Titles =
         {
-            "GenneCaster", "Universal", "WASD", "Camera Manager", "Player Settings", "Time Manager",
+            "GenneCaster", "Panels", "WASD", "Camera Manager", "Player Settings", "Time Manager",
             "Map Loader", "Player Manager", "NameTag Manager", "Theme Loader", "MiniMap Manager",
             "Leaderboard", "Closest Lava", "Scoreboard", "Kill Feed", "Presets", "Replay"
         };
@@ -36,6 +36,9 @@ namespace GenneCaster.UI
 
         private static readonly PanelId[] ReplayFirstColumn =
             new[] { PanelId.Replay }.Concat(Columns[0].Where(id => id != PanelId.Replay)).ToArray();
+
+        private static readonly PanelId[] Switchable =
+            Columns.SelectMany(column => column).Where(id => id != PanelId.Main && id != PanelId.Universal && id != PanelId.Wasd).ToArray();
 
         private readonly Panel[] panels = new Panel[(int)PanelId.Count];
         private readonly ConfigEntry<string>[] positions = new ConfigEntry<string>[(int)PanelId.Count];
@@ -71,10 +74,18 @@ namespace GenneCaster.UI
         internal void Toggle(PanelId id) => panels[(int)id].Enabled = !panels[(int)id].Enabled;
         internal void ShowMain() => panels[(int)PanelId.Main].Enabled = true;
 
+        internal void DrawSwitch(Panel panel, PanelId id) => panel.Selectable(Titles[(int)id], IsVisible(id), () => Toggle(id));
+
+        internal void DrawSwitches(Panel panel)
+        {
+            foreach (PanelId id in Switchable) DrawSwitch(panel, id);
+        }
+
         internal void Tick(float dt)
         {
             float blend = placed ? 1f - Mathf.Exp(-PositionDamping * dt) : 1f;
             placed = true;
+            foreach (Panel panel in panels) panel.Animate(dt);
             bool replaying = SyncReplayLayout();
             float top = replaying ? ReplayTimeline.Bottom + Gap : Margin;
             for (int column = 0; column < Columns.Length; column++)
@@ -95,13 +106,13 @@ namespace GenneCaster.UI
             foreach (PanelId id in column)
             {
                 int i = (int)id;
-                if (customPosition[i]) continue;
                 Panel panel = panels[i];
+                if (customPosition[i] || panel.IsDragging) continue;
                 var goal = new Vector2(x, y);
-                if (panel.Enabled)
+                if (panel.IsShown)
                 {
                     panel.SetPosition(Vector2.Lerp(panel.Rect.position, goal, blend));
-                    y += panel.Rect.height + Gap;
+                    y += (panel.Rect.height + Gap) * panel.Presence;
                 }
                 else
                 {
@@ -114,7 +125,7 @@ namespace GenneCaster.UI
         {
             for (int i = 0; i < panels.Length; i++)
             {
-                if (!panels[i].Enabled) continue;
+                if (!panels[i].IsShown) continue;
                 panels[i].Draw(drawContent[i]);
                 panels[i].ClampToScreen();
             }

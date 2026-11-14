@@ -12,6 +12,7 @@ namespace GenneCaster.UI
         private const float Inset = 8f;
         private const float HeaderY = 4f;
         private const float HeaderHeight = 24f;
+        private const float CollapsedHeight = HeaderY + HeaderHeight;
         private const float CloseSize = 15f;
         private const float RowGap = 2f;
         internal const float ButtonHeight = 20f;
@@ -22,14 +23,28 @@ namespace GenneCaster.UI
         private const int MinimumFontSize = 8;
         private const int BorderThickness = 2;
         private const int CornerRadius = 12;
+        private const float OpenDuration = 0.2f;
+        private const float HeightDamping = 18f;
+        private const float HeightSnap = 0.5f;
+        private const float DragThreshold = 4f;
 
         private static int nextWindowId = 0x47430000;
 
         private readonly int windowId = NextWindowId();
         private readonly GUIContent measured = new GUIContent();
+        private readonly float[] sliceX = new float[4];
+        private readonly float[] sliceY = new float[4];
+        private readonly float[] sliceU = new float[4];
+        private readonly float[] sliceV = new float[4];
         private Rect rect;
-        private float fittedHeight;
+        private float contentHeight;
+        private float shownHeight;
+        private bool hasMeasured;
+        private float visibility;
+        private bool dragging;
+        private Vector2 dragOrigin;
         private float builtScale;
+        private int cornerPixels;
         private Action<Panel>? content;
         private bool disposed;
 
@@ -37,11 +52,14 @@ namespace GenneCaster.UI
         private static readonly Color32 BackgroundColor = new Color32(10, 10, 10, 160);
         private static readonly Color32 ButtonColor = new Color32(20, 5, 8, 190);
         private static readonly Color32 FieldColor = new Color32(20, 20, 20, 230);
-        private Texture2D? background, button, field, close, closeHover;
-        private GUIStyle? buttonStyle, fieldStyle, closeStyle, titleStyle, labelStyle;
+        private Texture2D? background, button, selected, field, close, closeHover;
+        private GUIStyle? buttonStyle, selectedStyle, fieldStyle, closeStyle, titleStyle, labelStyle;
 
         internal string Title { get; }
         internal bool Enabled { get; set; }
+        internal bool IsShown => Enabled || visibility > 0f;
+        internal bool IsDragging => dragging;
+        internal float Presence => Mathf.SmoothStep(0f, 1f, visibility);
         internal Rect Rect => rect;
         private float ContentWidth => rect.width - Inset * 2f;
 
@@ -52,7 +70,8 @@ namespace GenneCaster.UI
         {
             Title = title;
             accent = accentColor;
-            rect = new Rect(0f, 0f, width, HeaderY + HeaderHeight + Inset + ButtonHeight);
+            shownHeight = CollapsedHeight + Inset + ButtonHeight;
+            rect = new Rect(0f, 0f, width, CollapsedHeight);
         }
 
         internal static int NextWindowId() => System.Threading.Interlocked.Increment(ref nextWindowId);
@@ -68,25 +87,60 @@ namespace GenneCaster.UI
             DestroyTextures();
         }
 
+        internal void Animate(float dt)
+        {
+            visibility = Mathf.MoveTowards(visibility, Enabled ? 1f : 0f, dt / OpenDuration);
+            if (!Enabled) dragging = false;
+            if (hasMeasured) shownHeight = EaseHeight(shownHeight, contentHeight, dt);
+            rect.height = Mathf.Lerp(CollapsedHeight, shownHeight, Presence);
+        }
+
+        private static float EaseHeight(float current, float target, float dt)
+        {
+            float next = Mathf.Lerp(current, target, 1f - Mathf.Exp(-HeightDamping * dt));
+            return Mathf.Abs(next - target) < HeightSnap ? target : next;
+        }
+
         internal void Draw(Action<Panel> drawContent)
         {
-            if (disposed || !Enabled) return;
+            if (disposed || !IsShown) return;
             content = drawContent;
-            if (fittedHeight > 0f && !Mathf.Approximately(fittedHeight, rect.height))
-            {
-                rect.height = fittedHeight;
-                DestroyBackground();
-            }
             EnsureTextures();
-            Vector2 before = rect.position;
-            rect = GUI.Window(windowId, rect, DrawWindow, GUIContent.none, GUIStyle.none);
-            if (rect.position != before) Moved?.Invoke();
+            Color previousColor = GUI.color;
+            bool previousEnabled = GUI.enabled;
+            GUI.color = new Color(previousColor.r, previousColor.g, previousColor.b, previousColor.a * Presence);
+            GUI.enabled = previousEnabled && Enabled;
+            try
+            {
+                Vector2 before = rect.position;
+                rect.position = GUI.Window(windowId, rect, DrawWindow, GUIContent.none, GUIStyle.none).position;
+                TrackDrag(before);
+            }
+            finally
+            {
+                GUI.color = previousColor;
+                GUI.enabled = previousEnabled;
+            }
+        }
+
+        private void TrackDrag(Vector2 before)
+        {
+            if (!Enabled) return;
+            if (!dragging && rect.position != before)
+            {
+                dragging = true;
+                dragOrigin = before;
+            }
+            if (!dragging || Event.current.rawType != EventType.MouseUp) return;
+            dragging = false;
+            if (Vector2.Distance(rect.position, dragOrigin) < DragThreshold) rect.position = dragOrigin;
+            else Moved?.Invoke();
         }
 
         private void DrawWindow(int id)
         {
             EnsureStyles();
-            GUI.DrawTexture(new Rect(0f, 0f, rect.width, rect.height), background);
+            DrawNineSlice(background!, new Rect(0f, 0f, rect.width, rect.height));
             float closeX = rect.width - Inset - CloseSize;
             GUI.Label(new Rect(Inset + 3f, HeaderY, closeX - Inset - 6f, HeaderHeight), Title, titleStyle);
             if (GUI.Button(new Rect(closeX, HeaderY + (HeaderHeight - CloseSize) * 0.5f, CloseSize, CloseSize), "×", closeStyle))
@@ -95,17 +149,51 @@ namespace GenneCaster.UI
                 Closed?.Invoke();
             }
 
-            float top = HeaderY + HeaderHeight + RowGap;
+            float top = CollapsedHeight + RowGap;
             GUILayout.BeginArea(new Rect(Inset, top, ContentWidth, Mathf.Max(1f, rect.height - top - Inset)));
             GUILayout.BeginVertical();
             try { content?.Invoke(this); }
             catch (Exception e) when (!(e is ExitGUIException)) { Log.ExceptionOnce($"panel-{Title}", e, $"Drawing the {Title} panel failed"); }
             GUILayout.EndVertical();
-            if (Event.current.type == EventType.Repaint)
-                fittedHeight = Mathf.Ceil(top + GUILayoutUtility.GetLastRect().height + Inset);
+            if (Event.current.type == EventType.Repaint) MeasureContent(top + GUILayoutUtility.GetLastRect().height + Inset);
             GUILayout.EndArea();
 
-            GUI.DragWindow(new Rect(0f, 0f, closeX - 3f, HeaderY + HeaderHeight));
+            if (Enabled) GUI.DragWindow(new Rect(0f, 0f, closeX - 3f, CollapsedHeight));
+        }
+
+        private void MeasureContent(float height)
+        {
+            contentHeight = Mathf.Ceil(height);
+            if (hasMeasured) return;
+            hasMeasured = true;
+            shownHeight = contentHeight;
+        }
+
+        private void DrawNineSlice(Texture2D texture, Rect area)
+        {
+            float corner = Mathf.Min(cornerPixels / builtScale, area.width * 0.5f, area.height * 0.5f);
+            float uv = corner * builtScale / texture.width;
+            SetSlices(sliceX, area.x, area.x + corner, area.xMax - corner, area.xMax);
+            SetSlices(sliceY, area.y, area.y + corner, area.yMax - corner, area.yMax);
+            SetSlices(sliceU, 0f, uv, 1f - uv, 1f);
+            SetSlices(sliceV, 1f, 1f - uv, uv, 0f);
+            for (int row = 0; row < 3; row++)
+            {
+                for (int column = 0; column < 3; column++)
+                {
+                    var target = new Rect(sliceX[column], sliceY[row], sliceX[column + 1] - sliceX[column], sliceY[row + 1] - sliceY[row]);
+                    var coordinates = new Rect(sliceU[column], sliceV[row + 1], sliceU[column + 1] - sliceU[column], sliceV[row] - sliceV[row + 1]);
+                    GUI.DrawTextureWithTexCoords(target, texture, coordinates);
+                }
+            }
+        }
+
+        private static void SetSlices(float[] slices, float a, float b, float c, float d)
+        {
+            slices[0] = a;
+            slices[1] = b;
+            slices[2] = c;
+            slices[3] = d;
         }
 
         private Rect NextRect(float height)
@@ -114,13 +202,17 @@ namespace GenneCaster.UI
             return new Rect(row.x + 1f, row.y + RowGap * 0.5f, Mathf.Max(1f, row.width - 2f), height);
         }
 
-        internal void Button(string text, Action? onClick, bool interactable = true)
+        internal void Button(string text, Action? onClick, bool interactable = true) => DrawButton(text, onClick, interactable, buttonStyle!);
+
+        internal void Selectable(string text, bool isSelected, Action onClick) => DrawButton(text, onClick, true, isSelected ? selectedStyle! : buttonStyle!);
+
+        private void DrawButton(string text, Action? onClick, bool interactable, GUIStyle style)
         {
             Rect area = NextRect(ButtonHeight);
-            buttonStyle!.fontSize = FittingFontSize(text, area.width - 6f);
+            style.fontSize = FittingFontSize(text, area.width - 6f, style);
             bool wasEnabled = GUI.enabled;
             GUI.enabled = wasEnabled && interactable;
-            if (GUI.Button(area, text, buttonStyle)) onClick?.Invoke();
+            if (GUI.Button(area, text, style)) onClick?.Invoke();
             GUI.enabled = wasEnabled;
         }
 
@@ -158,7 +250,7 @@ namespace GenneCaster.UI
             Color previous = GUI.color;
             GUI.color = accent;
             GUI.DrawTexture(area, Texture2D.whiteTexture);
-            GUI.color = color;
+            GUI.color = new Color(color.r, color.g, color.b, previous.a);
             GUI.DrawTexture(new Rect(area.x + 1f, area.y + 1f, area.width - 2f, area.height - 2f), Texture2D.whiteTexture);
             GUI.color = previous;
         }
@@ -179,14 +271,14 @@ namespace GenneCaster.UI
             return scroll;
         }
 
-        private int FittingFontSize(string text, float availableWidth)
+        private int FittingFontSize(string text, float availableWidth, GUIStyle style)
         {
             if (string.IsNullOrEmpty(text)) return ControlFontSize;
             measured.text = text;
             for (int size = ControlFontSize; size > MinimumFontSize; size--)
             {
-                buttonStyle!.fontSize = size;
-                if (buttonStyle.CalcSize(measured).x <= availableWidth) return size;
+                style.fontSize = size;
+                if (style.CalcSize(measured).x <= availableWidth) return size;
             }
             return MinimumFontSize;
         }
@@ -198,14 +290,22 @@ namespace GenneCaster.UI
             builtScale = scale;
             int Px(float units) => Mathf.Max(1, Mathf.RoundToInt(units * scale));
             if (background == null)
-                background = Textures.CreateTexture(Px(rect.width), Px(rect.height), BackgroundColor, accent, Px(BorderThickness), Px(CornerRadius));
+            {
+                cornerPixels = Px(CornerRadius);
+                int size = cornerPixels * 2 + 2;
+                background = Textures.CreateTexture(size, size, BackgroundColor, accent, Px(BorderThickness), cornerPixels);
+            }
             if (button != null) return;
             button = Textures.CreateTexture(64, (int)ButtonHeight, ButtonColor, accent, 1, 4);
+            selected = Textures.CreateTexture(64, (int)ButtonHeight, SelectedFill(accent), accent, 1, 4);
             field = Textures.CreateTexture(64, (int)ButtonHeight, FieldColor, accent, 1, 4);
             close = Textures.CreateTexture((int)CloseSize, (int)CloseSize, new Color32(115, 25, 25, 235), new Color32(175, 50, 50, 255), 1, 4);
             closeHover = Textures.CreateTexture((int)CloseSize, (int)CloseSize, new Color32(190, 35, 35, 255), new Color32(235, 75, 75, 255), 1, 4);
             if (buttonStyle != null) ApplyTextures();
         }
+
+        private static Color32 SelectedFill(Color32 color) =>
+            new Color32((byte)(color.r * 0.45f), (byte)(color.g * 0.45f), (byte)(color.b * 0.45f), 220);
 
         private void EnsureStyles()
         {
@@ -213,17 +313,19 @@ namespace GenneCaster.UI
             var none = new RectOffset(0, 0, 0, 0);
             const int border = 5;
             buttonStyle = new GUIStyle(GUI.skin.button) { alignment = TextAnchor.MiddleCenter, wordWrap = false, clipping = TextClipping.Clip, padding = new RectOffset(3, 3, 1, 1), margin = none, border = new RectOffset(border, border, border, border) };
+            selectedStyle = new GUIStyle(buttonStyle) { fontStyle = FontStyle.Bold };
             fieldStyle = new GUIStyle(GUI.skin.textField) { alignment = TextAnchor.MiddleCenter, clipping = TextClipping.Clip, padding = new RectOffset(4, 4, 1, 1), margin = none, border = new RectOffset(border, border, border, border) };
             closeStyle = new GUIStyle(GUI.skin.button) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, fontSize = 11, padding = new RectOffset(0, 0, 0, 1), margin = none, border = new RectOffset(border, border, border, border) };
             titleStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, fontSize = TitleFontSize, fontStyle = FontStyle.Bold, padding = none, margin = none, clipping = TextClipping.Clip };
             labelStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, fontSize = ControlFontSize, padding = new RectOffset(2, 2, 0, 0), margin = none, wordWrap = true, clipping = TextClipping.Clip };
-            foreach (GUIStyle style in new[] { buttonStyle, fieldStyle, closeStyle, titleStyle, labelStyle }) SetTextColor(style, Color.white);
+            foreach (GUIStyle style in new[] { buttonStyle, selectedStyle, fieldStyle, closeStyle, titleStyle, labelStyle }) SetTextColor(style, Color.white);
             ApplyTextures();
         }
 
         private void ApplyTextures()
         {
             SetBackground(buttonStyle!, button, button);
+            SetBackground(selectedStyle!, selected, selected);
             SetBackground(fieldStyle!, field, field);
             SetBackground(closeStyle!, close, closeHover);
         }
@@ -249,9 +351,9 @@ namespace GenneCaster.UI
         private void DestroyTextures()
         {
             DestroyBackground();
-            foreach (Texture2D? texture in new[] { button, field, close, closeHover })
+            foreach (Texture2D? texture in new[] { button, selected, field, close, closeHover })
                 if (texture != null) UnityEngine.Object.Destroy(texture);
-            button = field = close = closeHover = null;
+            button = selected = field = close = closeHover = null;
         }
 
         public void Dispose()
@@ -259,6 +361,7 @@ namespace GenneCaster.UI
             if (disposed) return;
             disposed = true;
             Enabled = false;
+            visibility = 0f;
             DestroyTextures();
             content = null;
             Closed = null;

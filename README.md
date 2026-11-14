@@ -36,7 +36,7 @@ Each release is built against the Gorilla Tag version that was current when it w
 
 The Leaderboard, Closest Lava, Scoreboard and Kill Feed overlays are Unity canvases loaded from an asset bundle embedded in the DLL, so they render at the same size on any resolution. They all share one font, picked from the game's fonts with the Previous/Next Font buttons in any of their panels.
 
-Panels stack themselves into columns until you drag one. Dragged positions are saved, and the **Reset Layout** button in the Universal panel puts every panel back. The interface scales with your resolution, and `UI Scale` in the config adds your own multiplier on top.
+Panels stack themselves into columns until you drag one. Dragged positions are saved, and the **Reset Layout** button in the Panels panel puts every panel back. The interface scales with your resolution, and `UI Scale` in the config adds your own multiplier on top.
 
 ## Controls
 
