@@ -12,7 +12,7 @@ namespace GenneCaster.UI
         private const float Inset = 8f;
         private const float HeaderY = 4f;
         private const float HeaderHeight = 24f;
-        private const float CollapsedHeight = HeaderY + HeaderHeight;
+        private const float HeaderBottom = HeaderY + HeaderHeight;
         private const float CloseSize = 15f;
         private const float RowGap = 2f;
         internal const float ButtonHeight = 20f;
@@ -23,7 +23,6 @@ namespace GenneCaster.UI
         private const int MinimumFontSize = 8;
         private const int BorderThickness = 2;
         private const int CornerRadius = 12;
-        private const float OpenDuration = 0.2f;
         private const float HeightDamping = 18f;
         private const float HeightSnap = 0.5f;
         private const float DragThreshold = 4f;
@@ -59,7 +58,7 @@ namespace GenneCaster.UI
         internal bool Enabled { get; set; }
         internal bool IsShown => Enabled || visibility > 0f;
         internal bool IsDragging => dragging;
-        internal float Presence => Mathf.SmoothStep(0f, 1f, visibility);
+        private float Opacity => Mathf.SmoothStep(0f, 1f, visibility);
         internal Rect Rect => rect;
         private float ContentWidth => rect.width - Inset * 2f;
 
@@ -70,8 +69,8 @@ namespace GenneCaster.UI
         {
             Title = title;
             accent = accentColor;
-            shownHeight = CollapsedHeight + Inset + ButtonHeight;
-            rect = new Rect(0f, 0f, width, CollapsedHeight);
+            shownHeight = HeaderBottom + Inset + ButtonHeight;
+            rect = new Rect(0f, 0f, width, shownHeight);
         }
 
         internal static int NextWindowId() => System.Threading.Interlocked.Increment(ref nextWindowId);
@@ -89,10 +88,10 @@ namespace GenneCaster.UI
 
         internal void Animate(float dt)
         {
-            visibility = Mathf.MoveTowards(visibility, Enabled ? 1f : 0f, dt / OpenDuration);
+            visibility = Mathf.MoveTowards(visibility, Enabled ? 1f : 0f, dt / CoreUI.FadeDuration);
             if (!Enabled) dragging = false;
             if (hasMeasured) shownHeight = EaseHeight(shownHeight, contentHeight, dt);
-            rect.height = Mathf.Lerp(CollapsedHeight, shownHeight, Presence);
+            rect.height = shownHeight;
         }
 
         private static float EaseHeight(float current, float target, float dt)
@@ -108,7 +107,7 @@ namespace GenneCaster.UI
             EnsureTextures();
             Color previousColor = GUI.color;
             bool previousEnabled = GUI.enabled;
-            GUI.color = new Color(previousColor.r, previousColor.g, previousColor.b, previousColor.a * Presence);
+            GUI.color = new Color(previousColor.r, previousColor.g, previousColor.b, previousColor.a * Opacity);
             GUI.enabled = previousEnabled && Enabled;
             try
             {
@@ -149,7 +148,7 @@ namespace GenneCaster.UI
                 Closed?.Invoke();
             }
 
-            float top = CollapsedHeight + RowGap;
+            float top = HeaderBottom + RowGap;
             GUILayout.BeginArea(new Rect(Inset, top, ContentWidth, Mathf.Max(1f, rect.height - top - Inset)));
             GUILayout.BeginVertical();
             try { content?.Invoke(this); }
@@ -158,7 +157,7 @@ namespace GenneCaster.UI
             if (Event.current.type == EventType.Repaint) MeasureContent(top + GUILayoutUtility.GetLastRect().height + Inset);
             GUILayout.EndArea();
 
-            if (Enabled) GUI.DragWindow(new Rect(0f, 0f, closeX - 3f, CollapsedHeight));
+            if (Enabled) GUI.DragWindow(new Rect(0f, 0f, closeX - 3f, HeaderBottom));
         }
 
         private void MeasureContent(float height)

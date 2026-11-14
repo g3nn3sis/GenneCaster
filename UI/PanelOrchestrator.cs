@@ -81,13 +81,13 @@ namespace GenneCaster.UI
             foreach (PanelId id in Switchable) DrawSwitch(panel, id);
         }
 
-        internal void Tick(float dt)
+        internal void Tick(float dt, float timelinePresence)
         {
             float blend = placed ? 1f - Mathf.Exp(-PositionDamping * dt) : 1f;
             placed = true;
             foreach (Panel panel in panels) panel.Animate(dt);
             bool replaying = SyncReplayLayout();
-            float top = replaying ? ReplayTimeline.Bottom + Gap : Margin;
+            float top = replaying ? Mathf.Lerp(Margin, ReplayTimeline.Bottom + Gap, timelinePresence) : Margin;
             for (int column = 0; column < Columns.Length; column++)
                 PlaceColumn(replaying && column == 0 ? ReplayFirstColumn : Columns[column], Margin + column * (PanelWidth + Gap), top, blend);
         }
@@ -112,7 +112,7 @@ namespace GenneCaster.UI
                 if (panel.IsShown)
                 {
                     panel.SetPosition(Vector2.Lerp(panel.Rect.position, goal, blend));
-                    y += (panel.Rect.height + Gap) * panel.Presence;
+                    y += panel.Rect.height + Gap;
                 }
                 else
                 {

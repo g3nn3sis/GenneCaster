@@ -47,6 +47,7 @@ Panels stack themselves into columns until you drag one. Dragged positions are s
 | `1` to `9` | Spectate the first nine other players; in replay mode, the recorded players with those leaderboard numbers |
 | `]` and `[` | Spectate the next or previous player (configurable); in replay mode, the next or previous recorded player |
 | `P` | Pause and unpause the replay in replay mode (configurable) |
+| `F1` | Show or hide the replay timeline in replay mode; `Esc` hides only the panels (configurable) |
 | `V` (held) | Hold to talk in all chat; release returns to the Microphone setting (configurable) |
 | `B` `N` `M` | Scoreboard timer: start, pause, reset (configurable) |
 | `H` `J` / `K` `L` | Scoreboard: team A score up/down, team B score up/down (configurable) |

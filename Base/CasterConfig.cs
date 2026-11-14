@@ -35,6 +35,7 @@ namespace GenneCaster.Base
         internal static ConfigEntry<Key> NextPlayerKey = null!;
         internal static ConfigEntry<Key> PreviousPlayerKey = null!;
         internal static ConfigEntry<Key> ReplayPauseKey = null!;
+        internal static ConfigEntry<Key> ReplayTimelineKey = null!;
 
         internal static ConfigEntry<bool> Wasd = null!;
         internal static ConfigEntry<bool> MouseClick = null!;
@@ -123,6 +124,7 @@ namespace GenneCaster.Base
             NextPlayerKey = config.Bind("Camera", "Next Player Key", Key.RightBracket, "Spectate the next player in the list.");
             PreviousPlayerKey = config.Bind("Camera", "Previous Player Key", Key.LeftBracket, "Spectate the previous player in the list.");
             ReplayPauseKey = config.Bind("Replay", "Pause Key", Key.P, "Pause and unpause the replay while in replay mode.");
+            ReplayTimelineKey = config.Bind("Replay", "Timeline Key", Key.F1, "Show and hide the replay timeline while in replay mode.");
 
             Wasd = config.Bind("Freecam", "Enabled", false, "Hold right mouse to fly your own player with WASD. Turned off while the camera is in Freecam mode.");
             MouseClick = config.Bind("Freecam", "Mouse Click", false, "Left click presses whatever is under the cursor with the right hand.");
