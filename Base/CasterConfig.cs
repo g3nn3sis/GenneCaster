@@ -43,6 +43,13 @@ namespace GenneCaster.Base
         internal static ConfigEntry<Key> OrbitDownKey = null!;
         internal static ConfigEntry<Key> OrbitResetKey = null!;
 
+        internal static ConfigEntry<string> WebName = null!;
+        internal static ConfigEntry<bool> WebDynamic = null!;
+        internal static ConfigEntry<Key> WebNextNodeKey = null!;
+        internal static ConfigEntry<Key> WebPreviousNodeKey = null!;
+        internal static ConfigEntry<Key> WebPlaceNodeKey = null!;
+        internal static ConfigEntry<Key> WebRemoveNodeKey = null!;
+
         internal static ConfigEntry<bool> Wasd = null!;
         internal static ConfigEntry<bool> MouseClick = null!;
         internal static ConfigEntry<float> MovementSpeed = null!;
@@ -125,7 +132,7 @@ namespace GenneCaster.Base
             file = config;
             config.SaveOnConfigSet = false;
 
-            ActiveCameraMode = config.Bind("Camera", "Mode", CameraMode.Spectator, "Default shows your own first person view, Spectator follows the selected player, Freecam flies the camera on its own.");
+            ActiveCameraMode = config.Bind("Camera", "Mode", CameraMode.Spectator, "Default shows your own first person view, Spectator follows the selected player, Freecam flies the camera on its own, Web watches the action from placed nodes.");
             FieldOfView = Range(config, "Camera", "Field Of View", 100f, 10f, 130f);
             NearClipPlane = Range(config, "Camera", "Near Clip", 0.01f, 0.01f, 0.99f);
             AudioListener = config.Bind("Camera", "Audio Listener", true, "Hear the game from the spectator camera.");
@@ -147,6 +154,13 @@ namespace GenneCaster.Base
             OrbitResetKey = config.Bind("Camera", "Reset Orbit Key", Key.R, "Put the orbit camera back behind the spectated player.");
             ReplayPauseKey = config.Bind("Replay", "Pause Key", Key.P, "Pause and unpause the replay while in replay mode.");
             ReplayTimelineKey = config.Bind("Replay", "Timeline Key", Key.F1, "Show and hide the replay timeline while in replay mode.");
+
+            WebName = config.Bind("Web", "Name", string.Empty, "Name of the saved camera web to use, from the Webs folder.");
+            WebDynamic = config.Bind("Web", "Dynamic", true, "On picks the node nearest the action by itself, off steps through nodes with the node keys.");
+            WebNextNodeKey = config.Bind("Web", "Next Node Key", Key.RightArrow, "Move the web camera to the next node in manual selection.");
+            WebPreviousNodeKey = config.Bind("Web", "Previous Node Key", Key.LeftArrow, "Move the web camera to the previous node in manual selection.");
+            WebPlaceNodeKey = config.Bind("Web", "Place Node Key", Key.F2, "Add a node where the camera is while editing the web.");
+            WebRemoveNodeKey = config.Bind("Web", "Remove Node Key", Key.F3, "Remove the node nearest the camera while editing the web.");
 
             Wasd = config.Bind("Freecam", "Enabled", false, "Hold right mouse to fly your own player with WASD. Turned off while the camera is in Freecam mode.");
             MouseClick = config.Bind("Freecam", "Mouse Click", false, "Left click presses whatever is under the cursor with the right hand.");

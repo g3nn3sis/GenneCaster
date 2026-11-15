@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
+using GenneCaster.GameCamera;
 using GenneCaster.Replay;
 using UnityEngine;
 
@@ -112,7 +113,7 @@ namespace GenneCaster.UI
             float progress = Progress(replay.Cursor, recording);
             Fill(new Rect(rail.x, rail.y, rail.width * progress, rail.height), ColorSpace.Current.Color);
 
-            ReplayPuppet? spectated = replay.Freecam ? null : replay.Spectated;
+            ReplayPuppet? spectated = replay.Camera == CameraMode.Spectator ? replay.Spectated : null;
             if (spectated != null)
             {
                 foreach (VoiceSegment segment in spectated.Actor.Voice.Segments)

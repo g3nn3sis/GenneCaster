@@ -15,6 +15,7 @@ namespace GenneCaster.Base
         internal static string Root => Path.Combine(Paths.GameRootPath, PluginInfo.Name);
         internal static string Configs => Path.Combine(Root, "Configs");
         internal static string Replays => Path.Combine(Root, "Replays");
+        internal static string Webs => Path.Combine(Root, "Webs");
         internal static string DefaultConfig => Path.Combine(Configs, DefaultConfigName + ConfigExtension);
     }
 }

@@ -4,6 +4,7 @@
 
 using GenneCaster.Base;
 using GenneCaster.Game;
+using GenneCaster.GameCamera;
 using GenneCaster.Player;
 using UnityEngine;
 
@@ -24,7 +25,8 @@ namespace GenneCaster.Replay
         internal ReplayRecording Recording { get; }
         internal float Cursor { get; private set; }
         internal bool Playing { get; set; } = true;
-        internal bool Freecam { get; set; }
+        internal CameraMode Camera { get; set; } = CameraMode.Spectator;
+        internal bool Freecam => Camera == CameraMode.Freecam;
         internal IReadOnlyList<ReplayPuppet> Puppets => puppets;
         private float rigLerp;
 
@@ -102,7 +104,7 @@ namespace GenneCaster.Replay
         {
             if (index < 0 || index >= puppets.Count) return;
             spectated = index;
-            Freecam = false;
+            Camera = CameraMode.Spectator;
         }
 
         internal void SpectateLocal() => SpectateWhere(p => p.Actor.IsLocal);
@@ -136,7 +138,7 @@ namespace GenneCaster.Replay
 
         internal void SpectateNext(int direction)
         {
-            Freecam = false;
+            Camera = CameraMode.Spectator;
             SpectateNextVisible(direction);
         }
 
@@ -152,7 +154,7 @@ namespace GenneCaster.Replay
             }
         }
 
-        internal bool IsSpectating(ReplayPuppet puppet) => !Freecam && Spectated == puppet;
+        internal bool IsSpectating(ReplayPuppet puppet) => Camera == CameraMode.Spectator && Spectated == puppet;
 
         private void ApplyEnvironment()
         {

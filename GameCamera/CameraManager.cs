@@ -25,7 +25,7 @@ namespace GenneCaster.GameCamera
 
         internal void LateUpdate()
         {
-            if (mode == CameraMode.Freecam && GorillaController.wasd) GorillaController.wasd = false;
+            if (FliesCamera && GorillaController.wasd) GorillaController.wasd = false;
             if (!EnsureCamera()) return;
             camera!.Apply(fieldOfView, nearClipPlane, audioListener);
             SwitchMode(camera);
@@ -33,18 +33,27 @@ namespace GenneCaster.GameCamera
             {
                 case CameraMode.Default: RunDefault(camera); break;
                 case CameraMode.Freecam: RunFreecam(camera); break;
+                case CameraMode.Web: RunWeb(camera); break;
                 default: RunSpectator(camera); break;
             }
         }
 
-        private static CameraMode ActiveMode =>
-            ReplaySession.Player is ReplayPlayer replay ? (replay.Freecam ? CameraMode.Freecam : CameraMode.Spectator) : mode;
+        private static bool FliesCamera => mode == CameraMode.Freecam || (mode == CameraMode.Web && WebCamera.Editing);
+
+        internal static CameraMode ActiveMode => ReplaySession.Player is ReplayPlayer replay ? replay.Camera : mode;
+
+        internal static void UseWeb()
+        {
+            if (ReplaySession.Player is ReplayPlayer replay) replay.Camera = CameraMode.Web;
+            else mode = CameraMode.Web;
+        }
 
         private void SwitchMode(CameraWrapper camera)
         {
             CameraMode next = ActiveMode;
             if (runningMode == next) return;
             if (runningMode == CameraMode.Freecam) FreecamCamera.Exit();
+            if (runningMode == CameraMode.Web) WebCamera.Exit();
             if (next == CameraMode.Freecam) FreecamCamera.Enter(camera);
             runningMode = next;
         }
@@ -82,6 +91,12 @@ namespace GenneCaster.GameCamera
             catch (Exception e) { Log.ExceptionOnce("freecam-camera", e, "Moving the freecam camera failed"); }
         }
 
+        private static void RunWeb(CameraWrapper camera)
+        {
+            try { WebCamera.Run(camera); }
+            catch (Exception e) { Log.ExceptionOnce("web-camera", e, "Moving the web camera failed"); }
+        }
+
         private bool EnsureCamera()
         {
             if (camera != null && camera.IsAlive) return true;
@@ -101,6 +116,7 @@ namespace GenneCaster.GameCamera
         protected override void OnDestroy()
         {
             FreecamCamera.Exit();
+            WebCamera.Exit();
             base.OnDestroy();
         }
     }

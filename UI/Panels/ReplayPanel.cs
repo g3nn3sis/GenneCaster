@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
+using GenneCaster.GameCamera;
 using GenneCaster.Replay;
 using UnityEngine;
 
@@ -62,8 +63,9 @@ namespace GenneCaster.UI.Panels
             });
             panel.HorizontalArea(() =>
             {
-                panel.Button("Spectate", () => replay.Freecam = false, replay.Freecam);
-                panel.Button("FreeCam", () => replay.Freecam = true, !replay.Freecam);
+                panel.Button("Spectate", () => replay.Camera = CameraMode.Spectator, replay.Camera != CameraMode.Spectator);
+                panel.Button("FreeCam", () => replay.Camera = CameraMode.Freecam, replay.Camera != CameraMode.Freecam);
+                panel.Button("Web", () => replay.Camera = CameraMode.Web, replay.Camera != CameraMode.Web);
             });
             panel.HorizontalArea(() =>
             {
@@ -71,7 +73,7 @@ namespace GenneCaster.UI.Panels
                 panel.Button("Next", () => replay.SpectateNext(1));
             });
             replay.RigLerp = panel.Slider("Rig Lerp", replay.RigLerp, ReplayPlayer.MinRigLerp, ReplayPlayer.MaxRigLerp);
-            panel.Label(replay.Freecam ? "FreeCam: hold right mouse, WASD to fly" : $"Spectating: {replay.Spectated?.Actor.Name ?? "nobody"}");
+            panel.Label(CameraStatus(replay));
             IReadOnlyList<ReplayPuppet> puppets = replay.Puppets;
             puppetScroll = panel.ScrollArea(puppetScroll, Panel.ListHeight, puppets.Count, () =>
             {
@@ -82,5 +84,12 @@ namespace GenneCaster.UI.Panels
                 }
             });
         }
+
+        private static string CameraStatus(ReplayPlayer replay) => replay.Camera switch
+        {
+            CameraMode.Freecam => "FreeCam: hold right mouse, WASD to fly",
+            CameraMode.Web => "Web: watching from the camera web",
+            _ => $"Spectating: {replay.Spectated?.Actor.Name ?? "nobody"}"
+        };
     }
 }

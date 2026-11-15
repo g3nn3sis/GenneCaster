@@ -23,6 +23,7 @@ namespace GenneCaster.UI
         Presets,
         Replay,
         Keybinds,
+        Web,
         Count
     }
 }

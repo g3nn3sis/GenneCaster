@@ -20,9 +20,13 @@ namespace GenneCaster.UI.Panels
             {
                 panel.Button("Default", () => CameraManager.mode = CameraMode.Default, CameraManager.mode != CameraMode.Default);
                 panel.Button("Spectator", () => CameraManager.mode = CameraMode.Spectator, CameraManager.mode != CameraMode.Spectator);
-                panel.Button("Freecam", () => CameraManager.mode = CameraMode.Freecam, CameraManager.mode != CameraMode.Freecam);
             });
-            if (CameraManager.mode == CameraMode.Freecam) DrawFlightSpeeds(panel);
+            panel.HorizontalArea(() =>
+            {
+                panel.Button("Freecam", () => CameraManager.mode = CameraMode.Freecam, CameraManager.mode != CameraMode.Freecam);
+                panel.Button("Web", () => CameraManager.mode = CameraMode.Web, CameraManager.mode != CameraMode.Web);
+            });
+            if (CameraManager.mode == CameraMode.Freecam || WebCamera.Editing) DrawFlightSpeeds(panel);
             DrawLens(panel);
             DrawFollow(panel);
             DrawOrbit(panel);

@@ -9,7 +9,7 @@ namespace GenneCaster.UI
         internal static readonly PanelId[][] Columns =
         {
             new[] { PanelId.Main, PanelId.Wasd, PanelId.Replay },
-            new[] { PanelId.Camera, PanelId.MiniMap },
+            new[] { PanelId.Camera, PanelId.Web, PanelId.MiniMap },
             new[] { PanelId.Nametag, PanelId.Leaderboard, PanelId.ClosestLava, PanelId.KillFeed },
             new[] { PanelId.Scoreboard, PanelId.Time, PanelId.MapLoader },
             new[] { PanelId.Player, PanelId.PlayerSettings, PanelId.Keybinds, PanelId.Theme, PanelId.Presets }
@@ -21,6 +21,7 @@ namespace GenneCaster.UI
             PanelId.Wasd => "WASD",
             PanelId.Replay => "Replay",
             PanelId.Camera => "Camera",
+            PanelId.Web => "Camera Web",
             PanelId.MiniMap => "MiniMap",
             PanelId.Nametag => "NameTags",
             PanelId.Leaderboard => "Leaderboard",

@@ -11,6 +11,7 @@ namespace GenneCaster.UI.Panels
         private readonly WorldPanels world = new WorldPanels();
         private readonly ReplayPanel replay = new ReplayPanel();
         private readonly KeybindPanel keybinds = new KeybindPanel();
+        private readonly WebPanel web = new WebPanel();
 
         internal PanelContent(PanelOrchestrator owner)
         {
@@ -23,6 +24,7 @@ namespace GenneCaster.UI.Panels
             PanelId.Main => main.Draw,
             PanelId.Replay => replay.Draw,
             PanelId.Camera => ViewPanels.DrawCamera,
+            PanelId.Web => web.Draw,
             PanelId.Wasd => ViewPanels.DrawWasd,
             PanelId.MiniMap => ViewPanels.DrawMiniMap,
             PanelId.Nametag => OverlayPanels.DrawNameTags,

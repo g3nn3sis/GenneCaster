@@ -4,5 +4,5 @@
 
 namespace GenneCaster.GameCamera
 {
-    internal enum CameraMode { Default, Spectator, Freecam }
+    internal enum CameraMode { Default, Spectator, Freecam, Web }
 }

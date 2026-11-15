@@ -19,9 +19,16 @@ namespace GenneCaster.Replay
         private readonly List<AudioSource> sourceScratch = new List<AudioSource>();
         private float nextScan;
 
+        internal LiveWorldMask() => Application.onBeforeRender += Hide;
+
         internal void Enforce()
         {
             if (Time.unscaledTime >= nextScan) Rescan();
+            Hide();
+        }
+
+        private void Hide()
+        {
             foreach (Renderer renderer in renderers)
             {
                 if (renderer == null || !renderer.enabled) continue;
@@ -41,18 +48,23 @@ namespace GenneCaster.Replay
             nextScan = Time.unscaledTime + RescanInterval;
             renderers.Clear();
             sources.Clear();
+            VRRig? local = GorillaTagger.Instance != null ? GorillaTagger.Instance.offlineVRRig : null;
+            if (local != null) Collect(local);
             foreach (VRRig rig in NetworkedPlayerManager.activeRigs ?? Array.Empty<VRRig>())
-            {
-                if (rig == null) continue;
-                rig.GetComponentsInChildren(true, rendererScratch);
-                renderers.AddRange(rendererScratch);
-                rig.GetComponentsInChildren(true, sourceScratch);
-                sources.AddRange(sourceScratch);
-            }
+                if (rig != null && rig != local) Collect(rig);
+        }
+
+        private void Collect(VRRig rig)
+        {
+            rig.GetComponentsInChildren(true, rendererScratch);
+            renderers.AddRange(rendererScratch);
+            rig.GetComponentsInChildren(true, sourceScratch);
+            sources.AddRange(sourceScratch);
         }
 
         public void Dispose()
         {
+            Application.onBeforeRender -= Hide;
             foreach (Renderer renderer in hidden)
                 if (renderer != null) renderer.enabled = true;
             foreach (AudioSource source in muted)
