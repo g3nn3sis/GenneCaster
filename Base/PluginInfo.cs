@@ -8,7 +8,7 @@ namespace GenneCaster.Base
     {
         public const string GUID = "com.gennesis.gennecaster";
         public const string Name = "GenneCaster";
-        public const string Version = "2.0.1";
+        public const string Version = "2.0.2";
         public const string GameProcess = "Gorilla Tag.exe";
     }
 }
