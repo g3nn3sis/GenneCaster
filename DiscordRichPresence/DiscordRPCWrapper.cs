@@ -8,42 +8,42 @@ using DiscordRPC.Logging;
 
 namespace GenneCaster.DiscordRichPresence
 {
-    public sealed class DiscordRpcWrapper : IDisposable
+    internal sealed class DiscordRPCWrapper : IDisposable
     {
-        private DiscordRpcClient? _client;
-        private readonly object _sync = new object();
-        private CancellationTokenSource? _cts;
-        private Task? _worker;
-        private readonly ConcurrentQueue<Action> _presenceQueue = new();
-        private bool _disposed;
-        private bool _isConnecting;
-        private int _reconnectAttempt;
+        private DiscordRpcClient? client;
+        private readonly object sync = new object();
+        private CancellationTokenSource? cts;
+        private Task? worker;
+        private readonly ConcurrentQueue<Action> presenceQueue = new();
+        private bool disposed;
+        private bool isConnecting;
+        private int reconnectAttempt;
 
-        public string ApplicationId { get; private set; } = string.Empty;
-        public string Username { get; private set; } = "Unknown";
-        public string UserId { get; private set; } = "Unknown";
-        public bool IsConnected => _client is { IsInitialized: true } && !_disposed;
+        internal string ApplicationId { get; private set; } = string.Empty;
+        internal string Username { get; private set; } = "Unknown";
+        internal string UserId { get; private set; } = "Unknown";
+        internal bool IsConnected => client is { IsInitialized: true } && !disposed;
 
-        public event Action<string, string>? OnReady;
-        public event Action<string>? OnError;
-        public event Action? OnDisconnected;
+        internal event Action<string, string>? OnReady;
+        internal event Action<string>? OnError;
+        internal event Action? OnDisconnected;
 
-        private readonly DateTime _sessionStart = DateTime.UtcNow;
+        private readonly DateTime sessionStart = DateTime.UtcNow;
 
-        public bool Initialize(string applicationId, int pipe = 0)
+        internal bool Initialize(string applicationId, int pipe = 0)
         {
-            lock (_sync)
+            lock (sync)
             {
-                if (_disposed)
-                    throw new ObjectDisposedException(nameof(DiscordRpcWrapper));
+                if (disposed)
+                    throw new ObjectDisposedException(nameof(DiscordRPCWrapper));
 
-                if (_worker != null)
+                if (worker != null)
                     return false;
 
                 ApplicationId = applicationId;
 
-                _cts = new CancellationTokenSource();
-                _worker = Task.Run(() => WorkerLoop(pipe, _cts.Token));
+                cts = new CancellationTokenSource();
+                worker = Task.Run(() => WorkerLoop(pipe, cts.Token));
 
                 return true;
             }
@@ -55,7 +55,7 @@ namespace GenneCaster.DiscordRichPresence
             {
                 try
                 {
-                    if (_client == null || !_client.IsInitialized)
+                    if (client == null || !client.IsInitialized)
                     {
                         await TryConnect(pipe);
                     }
@@ -77,37 +77,37 @@ namespace GenneCaster.DiscordRichPresence
 
         private async Task TryConnect(int pipe)
         {
-            if (_isConnecting || _disposed)
+            if (isConnecting || disposed)
                 return;
 
-            _isConnecting = true;
+            isConnecting = true;
 
             try
             {
-                _client?.Dispose();
+                client?.Dispose();
 
-                _client = new DiscordRpcClient(ApplicationId, pipe)
+                client = new DiscordRpcClient(ApplicationId, pipe)
                 {
                     Logger = new DiscordLogBridge { Level = LogLevel.Warning }
                 };
 
-                _client.OnReady += (_, e) =>
+                client.OnReady += (_, e) =>
                 {
                     Username = e.User.Username;
                     UserId = e.User.ID.ToString();
-                    _reconnectAttempt = 0;
+                    reconnectAttempt = 0;
 
                     OnReady?.Invoke(Username, UserId);
                 };
 
-                _client.OnError += (_, e) =>
+                client.OnError += (_, e) =>
                     OnError?.Invoke(e.Message);
 
-                _client.OnConnectionFailed += (_, _) =>
+                client.OnConnectionFailed += (_, _) =>
                     OnDisconnected?.Invoke();
 
-                _client.Initialize();
-                _reconnectAttempt = 0;
+                client.Initialize();
+                reconnectAttempt = 0;
             }
             catch (Exception ex)
             {
@@ -116,17 +116,17 @@ namespace GenneCaster.DiscordRichPresence
             }
             finally
             {
-                _isConnecting = false;
+                isConnecting = false;
             }
         }
 
         private async Task HandleReconnectDelay(CancellationToken token)
         {
-            _reconnectAttempt++;
+            reconnectAttempt++;
 
             int delay = Math.Min(
                 30000,
-                1000 * (int)Math.Pow(2, _reconnectAttempt)
+                1000 * (int)Math.Pow(2, reconnectAttempt)
             );
 
             await Task.Delay(delay, token);
@@ -134,10 +134,10 @@ namespace GenneCaster.DiscordRichPresence
 
         private void ProcessQueue()
         {
-            if (!IsConnected || _client == null)
+            if (!IsConnected || client == null)
                 return;
 
-            while (_presenceQueue.TryDequeue(out var action))
+            while (presenceQueue.TryDequeue(out var action))
             {
                 try
                 {
@@ -150,7 +150,7 @@ namespace GenneCaster.DiscordRichPresence
             }
         }
 
-        private readonly RichPresence _currentPresence = new()
+        private readonly RichPresence currentPresence = new()
         {
             Assets = new Assets(),
             Party = new Party(),
@@ -158,23 +158,23 @@ namespace GenneCaster.DiscordRichPresence
             Timestamps = new Timestamps()
         };
 
-        public void UpdatePresence(Action<RichPresence> updateAction)
+        internal void UpdatePresence(Action<RichPresence> updateAction)
         {
-            _presenceQueue.Enqueue(() =>
+            presenceQueue.Enqueue(() =>
             {
-                if (!IsConnected || _client == null)
+                if (!IsConnected || client == null)
                     return;
 
                 try
                 {
-                    updateAction(_currentPresence);
+                    updateAction(currentPresence);
 
-                    _currentPresence.Timestamps ??= new Timestamps();
+                    currentPresence.Timestamps ??= new Timestamps();
 
-                    if (_currentPresence.Timestamps.Start == null)
-                        _currentPresence.Timestamps.Start = _sessionStart;
+                    if (currentPresence.Timestamps.Start == null)
+                        currentPresence.Timestamps.Start = sessionStart;
 
-                    _client.SetPresence(_currentPresence);
+                    client.SetPresence(currentPresence);
                 }
                 catch (Exception ex)
                 {
@@ -183,7 +183,7 @@ namespace GenneCaster.DiscordRichPresence
             });
         }
 
-        public void UpdatePresence(
+        internal void UpdatePresence(
             string? details = null,
             string? state = null,
             string? largeImageKey = null,
@@ -193,7 +193,8 @@ namespace GenneCaster.DiscordRichPresence
             string? partyId = null,
             int? partyMax = null,
             int? partySize = null,
-            Button[]? buttons = null)
+            Button[]? buttons = null,
+            bool clearParty = false)
         {
             UpdatePresence(p =>
             {
@@ -204,7 +205,11 @@ namespace GenneCaster.DiscordRichPresence
                     p.State = state;
 
                 p.Assets ??= new Assets();
-                p.Party ??= new Party();
+
+                if (clearParty)
+                    p.Party = new Party();
+                else
+                    p.Party ??= new Party();
 
                 if (largeImageKey != null)
                     p.Assets.LargeImageKey = largeImageKey;
@@ -232,14 +237,14 @@ namespace GenneCaster.DiscordRichPresence
             });
         }
 
-        public void ClearPresence()
+        internal void ClearPresence()
         {
-            if (!IsConnected || _client == null)
+            if (!IsConnected || client == null)
                 return;
 
             try
             {
-                _client.ClearPresence();
+                client.ClearPresence();
             }
             catch (Exception ex)
             {
@@ -247,19 +252,19 @@ namespace GenneCaster.DiscordRichPresence
             }
         }
 
-        public void Shutdown()
+        internal void Shutdown()
         {
-            lock (_sync)
+            lock (sync)
             {
-                if (_disposed)
+                if (disposed)
                     return;
 
                 try
                 {
-                    _cts?.Cancel();
-                    _client?.ClearPresence();
-                    _client?.Dispose();
-                    _client = null;
+                    cts?.Cancel();
+                    client?.ClearPresence();
+                    client?.Dispose();
+                    client = null;
 
                     Username = "Unknown";
                     UserId = "Unknown";
@@ -275,14 +280,15 @@ namespace GenneCaster.DiscordRichPresence
         {
             Shutdown();
 
-            _disposed = true;
+            disposed = true;
 
             try
             {
-                _cts?.Dispose();
+                cts?.Dispose();
             }
-            catch
+            catch (Exception ex)
             {
+                OnError?.Invoke(ex.Message);
             }
 
             GC.SuppressFinalize(this);

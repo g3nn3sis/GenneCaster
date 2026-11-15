@@ -158,7 +158,7 @@ namespace GenneCaster.Game
             return new TagInfo(
                 true,
                 rig.Creator.NickName ?? string.Empty,
-                NameColor(TagStateOf(rig), rig.playerColor),
+                NameColor(RigTagState.Of(rig), rig.playerColor),
                 hzDisplay ? Mathf.RoundToInt(NetworkedPlayerManager.GetFPS(rig)) : 0,
                 platformIndicator ? NetworkedPlayerManager.GetPlatform(rig) : 0);
         }
@@ -227,13 +227,6 @@ namespace GenneCaster.Game
             if (fps >= FpsGoodThreshold) return "green";
             if (fps >= FpsWarnThreshold) return "yellow";
             return "red";
-        }
-
-        private static ReplayTagState TagStateOf(VRRig rig)
-        {
-            if (rig.lavaParticleSystem != null && rig.lavaParticleSystem.isPlaying) return ReplayTagState.Lava;
-            if (rig.rockParticleSystem != null && rig.rockParticleSystem.isPlaying) return ReplayTagState.Rock;
-            return ReplayTagState.None;
         }
 
         private static Color NameColor(ReplayTagState state, Color playerColor) => state switch

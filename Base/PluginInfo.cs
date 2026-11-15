@@ -6,9 +6,9 @@ namespace GenneCaster.Base
 {
     internal static class PluginInfo
     {
-        public const string GUID = "com.gennesis.gennecaster";
-        public const string Name = "GenneCaster";
-        public const string Version = "2.0.2";
-        public const string GameProcess = "Gorilla Tag.exe";
+        internal const string GUID = "com.gennesis.gennecaster";
+        internal const string Name = "GenneCaster";
+        internal const string Version = "2.0.2";
+        internal const string GameProcess = "Gorilla Tag.exe";
     }
 }

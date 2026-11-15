@@ -4,7 +4,6 @@
 
 using GenneCaster.Base;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace GenneCaster.GameCamera.Modes
 {
@@ -53,17 +52,12 @@ namespace GenneCaster.GameCamera.Modes
         {
             if (CasterConfig.OrbitAutoRotate.Value)
                 OrbitYaw -= CasterConfig.OrbitSpeed.Value * AutoRotateScale * deltaTime;
-            Keyboard? keyboard = Keyboard.current;
-            if (keyboard == null)
-            {
-                OrbitYaw = Mathf.Repeat(OrbitYaw + 180f, 360f) - 180f;
-                return;
-            }
+            if (CasterConfig.KeyPressed(CasterConfig.OrbitResetKey)) ResetOrbit();
             float step = CasterConfig.OrbitSpeed.Value * deltaTime;
-            if (keyboard.rightArrowKey.isPressed) OrbitYaw -= step;
-            if (keyboard.leftArrowKey.isPressed) OrbitYaw += step;
-            if (keyboard.upArrowKey.isPressed) OrbitPitch += step;
-            if (keyboard.downArrowKey.isPressed) OrbitPitch -= step;
+            if (CasterConfig.KeyHeld(CasterConfig.OrbitRightKey)) OrbitYaw -= step;
+            if (CasterConfig.KeyHeld(CasterConfig.OrbitLeftKey)) OrbitYaw += step;
+            if (CasterConfig.KeyHeld(CasterConfig.OrbitUpKey)) OrbitPitch += step;
+            if (CasterConfig.KeyHeld(CasterConfig.OrbitDownKey)) OrbitPitch -= step;
             OrbitYaw = Mathf.Repeat(OrbitYaw + 180f, 360f) - 180f;
             OrbitPitch = Mathf.Clamp(OrbitPitch, -MaxOrbitPitch, MaxOrbitPitch);
         }

@@ -23,11 +23,8 @@ namespace GenneCaster.UI
         internal void Update()
         {
             panels ??= new PanelOrchestrator();
-            if (CasterConfig.KeyPressed(CasterConfig.MenuKey))
-            {
-                Visible = !Visible;
-                if (Visible) panels.ShowMain();
-            }
+            KeyBinds.Tick();
+            if (CasterConfig.KeyPressed(CasterConfig.MenuKey)) Visible = !Visible;
             SyncTimelineToggle();
             float step = Time.unscaledDeltaTime / FadeDuration;
             panelProgress = Mathf.MoveTowards(panelProgress, Visible ? 1f : 0f, step);

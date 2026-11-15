@@ -8,28 +8,28 @@ namespace GenneCaster.DiscordRichPresence
 {
     internal sealed class DiscordRPCManager : ObjectComponent
     {
-        internal static DiscordRpcWrapper? _rpc;
-        internal const string discordBotId = "1361832683411607725";
-        internal static bool ready;
+        private const string ApplicationId = "1361832683411607725";
+
+        internal static DiscordRPCWrapper? Client;
+
         internal void Start()
         {
-            _rpc = new DiscordRpcWrapper();
-            _rpc.OnReady += (_, _) =>
+            Client = new DiscordRPCWrapper();
+            Client.OnReady += (_, _) =>
             {
                 Log.Forget("discord-error");
                 Log.Info("Connected to Discord.");
                 if (CasterConfig.DiscordPresence.Value) DiscordRPCStateManager.SetLoadingPresence();
-                ready = true;
             };
-            _rpc.OnError += msg => Log.WarningOnce("discord-error", $"Discord Rich Presence: {msg}");
-            _rpc.Initialize(discordBotId);
+            Client.OnError += message => Log.WarningOnce("discord-error", $"Discord Rich Presence: {message}");
+            Client.Initialize(ApplicationId);
         }
 
         protected override void OnApplicationQuit()
         {
             base.OnApplicationQuit();
-            _rpc?.Dispose();
-            _rpc = null;
+            Client?.Dispose();
+            Client = null;
         }
     }
 }

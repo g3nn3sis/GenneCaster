@@ -2,23 +2,26 @@
 // SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
+using BepInEx.Configuration;
 using GenneCaster.Base;
 using TMPro;
 using UnityEngine;
 
 namespace GenneCaster.Game
 {
-    internal sealed class Scoreboard : ObjectComponent
+    internal sealed class Scoreboard : HudOverlay
     {
         internal static new bool enabled { get => CasterConfig.ScoreboardEnabled.Value; set => CasterConfig.ScoreboardEnabled.Value = value; }
 
         private const float StartSeconds = -10f;
         private const float StopSeconds = 180f;
+        private const int MaxScore = 999;
         private static readonly Color PreRollColor = new Color(1f, 0.55f, 0.15f, 1f);
+
+        internal enum Team { A, B }
 
         internal static bool Running { get; private set; }
         private static float display = StartSeconds;
-        private static bool initialized;
 
         internal static string TimeString => FormatTime(display);
 
@@ -30,22 +33,20 @@ namespace GenneCaster.Game
             display = StartSeconds;
         }
 
-        internal static void AddScore(ConfigEntryRef team, int delta)
+        internal static void AddScore(Team team, int delta)
         {
-            if (team == ConfigEntryRef.A) CasterConfig.ScoreboardTeamAScore.Value = Mathf.Clamp(CasterConfig.ScoreboardTeamAScore.Value + delta, 0, 999);
-            else CasterConfig.ScoreboardTeamBScore.Value = Mathf.Clamp(CasterConfig.ScoreboardTeamBScore.Value + delta, 0, 999);
+            ConfigEntry<int> score = team == Team.A ? CasterConfig.ScoreboardTeamAScore : CasterConfig.ScoreboardTeamBScore;
+            score.Value = Mathf.Clamp(score.Value + delta, 0, MaxScore);
         }
 
-        internal enum ConfigEntryRef { A, B }
-
-        private GameObject? instance;
         private RectTransform? root;
         private TMP_Text? teamAName, teamAScore, teamBName, teamBScore, timerText;
-        private Vector2 basePos;
-        private int appliedFont = -1;
-        private bool failed;
         private string aName = "", bName = "", timeText = "";
         private int aScore = -1, bScore = -1;
+
+        protected override bool Active => enabled;
+
+        protected override GameObject? Prefab => HudAssets.ScoreboardPrefab;
 
         internal void Update()
         {
@@ -60,65 +61,34 @@ namespace GenneCaster.Game
             if (CasterConfig.KeyPressed(CasterConfig.ScoreboardStartKey)) Running = true;
             if (CasterConfig.KeyPressed(CasterConfig.ScoreboardPauseKey)) Running = false;
             if (CasterConfig.KeyPressed(CasterConfig.ScoreboardResetKey)) ResetTimer();
-            if (CasterConfig.KeyPressed(CasterConfig.ScoreboardTeamAUpKey)) AddScore(ConfigEntryRef.A, 1);
-            if (CasterConfig.KeyPressed(CasterConfig.ScoreboardTeamADownKey)) AddScore(ConfigEntryRef.A, -1);
-            if (CasterConfig.KeyPressed(CasterConfig.ScoreboardTeamBUpKey)) AddScore(ConfigEntryRef.B, 1);
-            if (CasterConfig.KeyPressed(CasterConfig.ScoreboardTeamBDownKey)) AddScore(ConfigEntryRef.B, -1);
+            if (CasterConfig.KeyPressed(CasterConfig.ScoreboardTeamAUpKey)) AddScore(Team.A, 1);
+            if (CasterConfig.KeyPressed(CasterConfig.ScoreboardTeamADownKey)) AddScore(Team.A, -1);
+            if (CasterConfig.KeyPressed(CasterConfig.ScoreboardTeamBUpKey)) AddScore(Team.B, 1);
+            if (CasterConfig.KeyPressed(CasterConfig.ScoreboardTeamBDownKey)) AddScore(Team.B, -1);
         }
 
-        internal void LateUpdate()
+        protected override bool Bind(GameObject canvas)
         {
-            if (!initialized) { display = StartSeconds; initialized = true; }
-            if (failed) return;
-            if (!enabled)
-            {
-                if (instance != null && instance.activeSelf) instance.SetActive(false);
-                return;
-            }
-            if (instance == null && !Build()) return;
-            if (!instance!.activeSelf) instance.SetActive(true);
-            try { Refresh(); }
-            catch (Exception e) { Log.ExceptionOnce("scoreboard", e, "Updating the scoreboard failed"); }
+            root = canvas.transform.Find("Scoreboard") as RectTransform;
+            teamAName = FindText(canvas, "TeamAName");
+            teamAScore = FindText(canvas, "TeamAScore");
+            teamBName = FindText(canvas, "TeamBName");
+            teamBScore = FindText(canvas, "TeamBScore");
+            timerText = FindText(canvas, "TimerText");
+            return root != null && teamAName != null && teamAScore != null && teamBName != null && teamBScore != null && timerText != null;
         }
 
-        private bool Build()
+        private static TMP_Text? FindText(GameObject canvas, string name)
         {
-            if (!HudAssets.Ready || HudAssets.ScoreboardPrefab == null) { failed = true; return false; }
-            instance = Instantiate(HudAssets.ScoreboardPrefab);
-            instance.name = "_GenneCaster Scoreboard";
-            DontDestroyOnLoad(instance);
-
-            root = instance.transform.Find("Scoreboard") as RectTransform;
-            teamAName = Find("TeamAName");
-            teamAScore = Find("TeamAScore");
-            teamBName = Find("TeamBName");
-            teamBScore = Find("TeamBScore");
-            timerText = Find("TimerText");
-            if (root == null || teamAName == null || teamAScore == null || teamBName == null || teamBScore == null || timerText == null)
-            {
-                Log.Error("Scoreboard prefab layout is not as expected.");
-                failed = true;
-                Destroy(instance);
-                instance = null;
-                return false;
-            }
-            basePos = root.anchoredPosition;
-            return true;
-        }
-
-        private TMP_Text? Find(string name)
-        {
-            foreach (TMP_Text t in instance!.GetComponentsInChildren<TMP_Text>(true))
-                if (t.name == name) return t;
+            foreach (TMP_Text text in canvas.GetComponentsInChildren<TMP_Text>(true))
+                if (text.name == name) return text;
             return null;
         }
 
-        private void Refresh()
+        protected override void Refresh()
         {
-            root!.localScale = Vector3.one * CasterConfig.ScoreboardScale.Value;
-            root.anchoredPosition = basePos + new Vector2(CasterConfig.ScoreboardOffsetX.Value, CasterConfig.ScoreboardOffsetY.Value);
-            int font = CasterConfig.HudFont.Value;
-            if (font != appliedFont) { appliedFont = font; HudAssets.ApplyFont(instance!); }
+            Place(root!, HudLayout.PositionOf(HudSlot.Scoreboard), EdgeInset, CasterConfig.ScoreboardScale, CasterConfig.ScoreboardOffsetX, CasterConfig.ScoreboardOffsetY);
+            ApplyFontIfChanged();
 
             string a = CasterConfig.ScoreboardTeamAName.Value;
             if (a != aName) { aName = a; teamAName!.text = a; }
@@ -145,13 +115,6 @@ namespace GenneCaster.Game
             }
             int total = Mathf.FloorToInt(seconds);
             return $"{total / 60}:{total % 60:00}";
-        }
-
-        protected override void OnDestroy()
-        {
-            if (instance != null) Destroy(instance);
-            instance = null;
-            base.OnDestroy();
         }
     }
 }

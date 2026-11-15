@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
+using GenneCaster.Base;
 using GenneCaster.Game;
 using GenneCaster.GameCamera.Modes;
 using GenneCaster.Player;
@@ -119,7 +120,7 @@ namespace GenneCaster.Replay
                 Joints = joints,
                 Actor = actor,
                 Tap = voice != null ? voice.gameObject.AddComponent<VoiceTap>() : null,
-                Tagged = TagStateOf(rig) != ReplayTagState.None,
+                Tagged = RigTagState.Of(rig) != ReplayTagState.None,
             };
             bindings[key] = binding;
             return binding;
@@ -171,7 +172,7 @@ namespace GenneCaster.Replay
                 JointScales = new ushort[skeleton.JointCount],
                 Material = rig.setMatIndex,
                 Fps = Mathf.RoundToInt(NetworkedPlayerManager.GetFPS(rig)),
-                Tag = TagStateOf(rig),
+                Tag = RigTagState.Of(rig),
             };
             for (int i = 0; i < skeleton.JointCount; i++)
             {
@@ -200,13 +201,6 @@ namespace GenneCaster.Replay
                 inverseRoot * parent.rotation * map.syncRotation,
                 shownPosition,
                 shownRotation);
-        }
-
-        private static ReplayTagState TagStateOf(VRRig rig)
-        {
-            if (rig.lavaParticleSystem != null && rig.lavaParticleSystem.isPlaying) return ReplayTagState.Lava;
-            if (rig.rockParticleSystem != null && rig.rockParticleSystem.isPlaying) return ReplayTagState.Rock;
-            return ReplayTagState.None;
         }
 
         private void DetectTag(Binding binding, ReplayTagState state, float now)

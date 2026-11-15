@@ -34,19 +34,20 @@ to the game and BepInEx are in `Directory.Build.props` (`GamePath`).
 
 ```
 Base/            Plugin bootstrap: BaseLoader, ObjectComponent, HarmonyPatches, CasterConfig, Log, PluginInfo
-Game/            On-screen/game features: NameTag, MiniMap, Leaderboard, Scoreboard, ClosestLava, KillFeed, TimeManager, assets
+Game/            On-screen/game features: NameTag, MiniMap, HudOverlay (Leaderboard, Scoreboard, ClosestLava, KillFeed), TimeManager, assets
 Player/          Local + networked player: controllers, rig list, platform detection
 GameCamera/      Spectator/free camera: CameraManager, wrapper, smoothing, Modes/
 Replay/          Replay recorder and playback: ReplaySession, recorder, puppets, voice capture
-UI/              IMGUI panel system: CoreUI, PanelOrchestrator, Panel, PanelContent, theming, scaling
+UI/              IMGUI panel system: CoreUI, PanelOrchestrator, PanelLayout, PanelCatalog, Panel, theming, scaling
+UI/Panels/       What each panel draws, one class per column group (Main, View, Overlays, World, Setup, Replay)
 DiscordRichPresence/  Mod-side Discord integration
-Patches/         Harmony patches
+Patches/         Harmony patches, including ObjectPatcher which creates the feature components
 External/        Vendored third-party source (DiscordRPC) — do not modify
 Resources/       Embedded icons + HUD asset bundle
 ```
 
-Namespaces mirror folders: `GenneCaster.<Folder>` (e.g. `GenneCaster.Game`). There is no
-`Classes.` segment.
+Namespaces mirror folders: `GenneCaster.<Folder>` (e.g. `GenneCaster.Game`, `GenneCaster.UI.Panels`).
+There is no `Classes.` segment. One top-level type per file, named after the type.
 
 ## Code standard
 
@@ -82,6 +83,12 @@ newline at end of file. Keep related code grouped and ordered the same way acros
 - `NetworkedPlayerManager.activeRigs` can be null; the camera/rig may not exist yet.
 - UI is authored at 1080p through `UiScale`; it must look right from 720p to 4K.
 - Input uses the new Input System via `CasterConfig.KeyPressed/KeyHeld`, not legacy `Input`.
+- Every panel is a collapsible title bar (`Panel`); there is no switch list and no section headers
+  inside panels. Panels always sit in a column slot (`PanelLayout`, pure logic with no Unity types so
+  it can be exercised outside the game) and never overlap; dragging one reorders the slots live. A new panel needs a `PanelId`, a title and default column in `PanelCatalog`, and a draw
+  method wired in `PanelContent.For`. Never rename a `PanelId` member — it is the saved `Layout` key.
+- A canvas HUD overlay subclasses `HudOverlay` (`Active`, `Prefab`, `Bind`, `Refresh`); the base owns
+  building, showing, hiding, font and teardown.
 - Features are auto-discovered by reflection — a new `ObjectComponent` subclass runs with no
   registration, so an incomplete one still loads. Guard with `enabled`.
 

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
+using GenneCaster.Base;
 using GenneCaster.Player;
 using HarmonyLib;
 using System.Reflection;

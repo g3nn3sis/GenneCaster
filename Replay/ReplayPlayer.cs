@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
+using GenneCaster.Base;
 using GenneCaster.Game;
 using GenneCaster.Player;
 using UnityEngine;
@@ -156,7 +157,8 @@ namespace GenneCaster.Replay
         private void ApplyEnvironment()
         {
             EnvironmentState? state = Recording.EnvironmentAt(Cursor);
-            if (state is not EnvironmentState target || appliedEnvironment.Equals(target)) return;
+            if (state is not EnvironmentState target) return;
+            if (appliedEnvironment is EnvironmentState applied && applied.Equals(target)) return;
             appliedEnvironment = target;
             TimeManager.Apply(target.TimeIndex, target.Raining);
         }

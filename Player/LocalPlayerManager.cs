@@ -17,6 +17,9 @@ namespace GenneCaster.Player
 
         private static float nextChangeTime;
 
+        private int gameVSyncCount;
+        private bool afkKickPending = true;
+
         internal static float Red { get => CasterConfig.PlayerRed.Value; set => CasterConfig.PlayerRed.Value = value; }
         internal static float Green { get => CasterConfig.PlayerGreen.Value; set => CasterConfig.PlayerGreen.Value = value; }
         internal static float Blue { get => CasterConfig.PlayerBlue.Value; set => CasterConfig.PlayerBlue.Value = value; }
@@ -26,25 +29,35 @@ namespace GenneCaster.Player
 
         internal void Start()
         {
-            ApplyGameSettings();
-            CasterConfig.DisableVSync.SettingChanged += (_, _) => ApplyGameSettings();
-            CasterConfig.DisableAfkKick.SettingChanged += (_, _) => ApplyGameSettings();
+            gameVSyncCount = QualitySettings.vSyncCount;
+            ApplyVSync();
+            CasterConfig.DisableVSync.SettingChanged += (_, _) => ApplyVSync();
+            CasterConfig.DisableAfkKick.SettingChanged += (_, _) => afkKickPending = true;
         }
 
         internal void Update()
+        {
+            if (afkKickPending) ApplyAfkKick();
+            ApplyMicrophoneMode();
+        }
+
+        private void ApplyVSync() => QualitySettings.vSyncCount = CasterConfig.DisableVSync.Value ? 0 : gameVSyncCount;
+
+        private void ApplyAfkKick()
+        {
+            PhotonNetworkController? controller = PhotonNetworkController.Instance;
+            if (controller == null) return;
+            controller.disableAFKKick = CasterConfig.DisableAfkKick.Value;
+            afkKickPending = false;
+        }
+
+        private static void ApplyMicrophoneMode()
         {
             GorillaComputer? computer = GorillaComputer.instance;
             if (computer == null || !computer.isActiveAndEnabled) return;
             bool openMic = microphoneStatus || CasterConfig.KeyHeld(CasterConfig.PushToTalkKey);
             string pttType = openMic ? "OPEN MIC" : "PUSH TO TALK";
             if (computer.pttType != pttType) computer.pttType = pttType;
-        }
-
-        private static void ApplyGameSettings()
-        {
-            if (CasterConfig.DisableVSync.Value) QualitySettings.vSyncCount = 0;
-            if (PhotonNetworkController.Instance != null)
-                PhotonNetworkController.Instance.disableAFKKick = CasterConfig.DisableAfkKick.Value;
         }
 
         internal static string NormalizeName(string name)

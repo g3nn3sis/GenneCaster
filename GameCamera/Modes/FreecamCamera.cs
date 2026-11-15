@@ -32,31 +32,31 @@ namespace GenneCaster.GameCamera.Modes
             Keyboard? keyboard = Keyboard.current;
             bool look = mouse != null && keyboard != null && mouse.rightButton.isPressed;
             SetLooking(look);
-            if (look) Fly(mouse!, keyboard!);
+            if (look) Fly(mouse!);
             camera.SetPose(position, Quaternion.Euler(pitch, yaw, 0f));
         }
 
-        private static void Fly(Mouse mouse, Keyboard keyboard)
+        private static void Fly(Mouse mouse)
         {
             Vector2 delta = mouse.delta.ReadValue();
             float sensitivity = CasterConfig.MouseSpeed.Value;
             yaw += delta.x * sensitivity;
             pitch = Mathf.Clamp(pitch - delta.y * sensitivity, -MaxPitch, MaxPitch);
-            position += MoveDirection(keyboard) * (CasterConfig.MovementSpeed.Value * Time.deltaTime);
+            position += MoveDirection() * (CasterConfig.MovementSpeed.Value * Time.deltaTime);
         }
 
-        private static Vector3 MoveDirection(Keyboard keyboard)
+        private static Vector3 MoveDirection()
         {
             Quaternion heading = Quaternion.Euler(0f, yaw, 0f);
             Vector3 forward = heading * Vector3.forward;
             Vector3 right = heading * Vector3.right;
             Vector3 direction = Vector3.zero;
-            if (keyboard.wKey.isPressed) direction += forward;
-            if (keyboard.sKey.isPressed) direction -= forward;
-            if (keyboard.dKey.isPressed) direction += right;
-            if (keyboard.aKey.isPressed) direction -= right;
-            if (keyboard.spaceKey.isPressed) direction += Vector3.up;
-            if (keyboard.leftShiftKey.isPressed) direction -= Vector3.up;
+            if (CasterConfig.KeyHeld(CasterConfig.FlyForwardKey)) direction += forward;
+            if (CasterConfig.KeyHeld(CasterConfig.FlyBackKey)) direction -= forward;
+            if (CasterConfig.KeyHeld(CasterConfig.FlyRightKey)) direction += right;
+            if (CasterConfig.KeyHeld(CasterConfig.FlyLeftKey)) direction -= right;
+            if (CasterConfig.KeyHeld(CasterConfig.FlyUpKey)) direction += Vector3.up;
+            if (CasterConfig.KeyHeld(CasterConfig.FlyDownKey)) direction -= Vector3.up;
             return direction;
         }
 

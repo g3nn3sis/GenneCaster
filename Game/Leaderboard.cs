@@ -12,7 +12,7 @@ using UnityEngine.UI;
 
 namespace GenneCaster.Game
 {
-    internal sealed class Leaderboard : ObjectComponent
+    internal sealed class Leaderboard : HudOverlay
     {
         internal static new bool enabled { get => CasterConfig.LeaderboardEnabled.Value; set => CasterConfig.LeaderboardEnabled.Value = value; }
 
@@ -22,6 +22,7 @@ namespace GenneCaster.Game
         private static readonly Color FpsBadColor = new Color(0.95f, 0.3f, 0.3f);
         private const int FpsGoodThreshold = 60;
         private const int FpsWarnThreshold = 55;
+        private static readonly string[] KeyLabels = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 
         private sealed class Row
         {
@@ -34,56 +35,23 @@ namespace GenneCaster.Game
         }
 
         private readonly List<Row> rows = new List<Row>();
-        private GameObject? instance;
         private RectTransform? root;
-        private Transform? rowParent;
         private GameObject? rowTemplate;
-        private Vector2 basePos;
-        private int appliedFont = -1;
-        private bool failed;
 
-        private static bool Active => enabled && (PhotonNetwork.InRoom || ReplaySession.IsReplaying);
+        protected override bool Active => enabled && (PhotonNetwork.InRoom || ReplaySession.IsReplaying);
 
-        internal void LateUpdate()
+        protected override GameObject? Prefab => HudAssets.LeaderboardPrefab;
+
+        protected override bool Bind(GameObject canvas)
         {
-            if (failed) return;
-            if (!Active)
-            {
-                if (instance != null && instance.activeSelf) instance.SetActive(false);
-                return;
-            }
-            if (instance == null && !Build()) return;
-            if (!instance!.activeSelf) instance.SetActive(true);
-            try { Refresh(); }
-            catch (Exception e) { Log.ExceptionOnce("leaderboard", e, "Updating the leaderboard failed"); }
-        }
-
-        private bool Build()
-        {
-            if (!HudAssets.Ready || HudAssets.LeaderboardPrefab == null) { failed = true; return false; }
-            instance = Instantiate(HudAssets.LeaderboardPrefab);
-            instance.name = "_GenneCaster Leaderboard";
-            DontDestroyOnLoad(instance);
-
-            root = instance.transform.Find("Leaderboard") as RectTransform;
-            rowParent = root;
+            root = canvas.transform.Find("Leaderboard") as RectTransform;
             rowTemplate = root != null ? root.Find("RowTemplate")?.gameObject : null;
-            if (root == null || rowTemplate == null)
-            {
-                Log.Error("Leaderboard prefab layout is not as expected.");
-                failed = true;
-                Destroy(instance);
-                instance = null;
-                return false;
-            }
-            basePos = root.anchoredPosition;
-            return true;
+            return root != null && rowTemplate != null;
         }
 
-        private void Refresh()
+        protected override void Refresh()
         {
-            root!.localScale = Vector3.one * CasterConfig.LeaderboardScale.Value;
-            root.anchoredPosition = basePos + new Vector2(CasterConfig.LeaderboardOffsetX.Value, CasterConfig.LeaderboardOffsetY.Value);
+            Place(root!, HudLayout.PositionOf(HudSlot.Leaderboard), EdgeInset, CasterConfig.LeaderboardScale, CasterConfig.LeaderboardOffsetX, CasterConfig.LeaderboardOffsetY);
             ApplyFontIfChanged();
 
             bool showIcons = CasterConfig.LeaderboardPlatformIcons.Value;
@@ -104,12 +72,12 @@ namespace GenneCaster.Game
             for (int i = 0; i < rigs.Length; i++)
             {
                 VRRig rig = rigs[i];
-                if (rig == null || rig.isOfflineVRRig) continue;
+                if (!NetworkedPlayerManager.IsOtherPlayer(rig)) continue;
                 int keyOrdinal = otherIndex++;
                 if (rig.Creator == null) continue;
                 int fps = showFps ? Mathf.RoundToInt(NetworkedPlayerManager.GetFPS(rig)) : 0;
                 int platform = showIcons ? NetworkedPlayerManager.GetPlatform(rig) : 0;
-                Fill(GetRow(shown++), keyOrdinal, rig.Creator.NickName ?? "Player", IsTagged(rig), rig == selected, showFps, fps, platform);
+                Fill(GetRow(shown++), keyOrdinal, rig.Creator.NickName ?? "Player", RigTagState.IsTagged(rig), rig == selected, showFps, fps, platform);
             }
             return shown;
         }
@@ -154,21 +122,13 @@ namespace GenneCaster.Game
             if (row.Platform.enabled != (icon != null)) row.Platform.enabled = icon != null;
         }
 
-        private static string KeyLabel(int otherIndex) => otherIndex < 9 ? (otherIndex + 1).ToString() : string.Empty;
-
-        private void ApplyFontIfChanged()
-        {
-            int font = CasterConfig.HudFont.Value;
-            if (font == appliedFont) return;
-            appliedFont = font;
-            HudAssets.ApplyFont(instance!);
-        }
+        private static string KeyLabel(int otherIndex) => otherIndex < KeyLabels.Length ? KeyLabels[otherIndex] : string.Empty;
 
         private Row GetRow(int index)
         {
             while (rows.Count <= index)
             {
-                GameObject go = Instantiate(rowTemplate!, rowParent);
+                GameObject go = Instantiate(rowTemplate!, root);
                 go.name = $"Row{rows.Count}";
                 TMP_Text fps = go.transform.Find("Fps").GetComponent<TMP_Text>();
                 fps.textWrappingMode = TextWrappingModes.NoWrap;
@@ -182,7 +142,7 @@ namespace GenneCaster.Game
                     Platform = go.transform.Find("Platform").GetComponent<Image>(),
                 };
                 rows.Add(row);
-                appliedFont = -1;
+                InvalidateFont();
             }
             Row r = rows[index];
             if (!r.Go.activeSelf) r.Go.SetActive(true);
@@ -194,20 +154,6 @@ namespace GenneCaster.Game
             if (fps >= FpsGoodThreshold) return FpsGoodColor;
             if (fps >= FpsWarnThreshold) return FpsWarnColor;
             return FpsBadColor;
-        }
-
-        private static bool IsTagged(VRRig rig)
-        {
-            if (rig.lavaParticleSystem != null && rig.lavaParticleSystem.isPlaying) return true;
-            if (rig.rockParticleSystem != null && rig.rockParticleSystem.isPlaying) return true;
-            return false;
-        }
-
-        protected override void OnDestroy()
-        {
-            if (instance != null) Destroy(instance);
-            instance = null;
-            base.OnDestroy();
         }
     }
 }

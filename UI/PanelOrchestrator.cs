@@ -5,145 +5,169 @@
 using BepInEx.Configuration;
 using GenneCaster.Base;
 using GenneCaster.Replay;
+using GenneCaster.UI.Panels;
 using UnityEngine;
 
 namespace GenneCaster.UI
 {
-    internal enum PanelId { Main, Universal, Wasd, Camera, PlayerSettings, Time, MapLoader, Player, Nametag, Theme, MiniMap, Leaderboard, ClosestLava, Scoreboard, KillFeed, Presets, Replay, Count }
-
     internal sealed class PanelOrchestrator : IDisposable
     {
+        private const int PanelCount = (int)PanelId.Count;
         private const float PanelWidth = 160f;
         private const float Margin = 8f;
         private const float Gap = 6f;
+        private const float ColumnPitch = PanelWidth + Gap;
+        private const float RowPitch = Panel.HeaderHeight + Gap;
         private const float PositionDamping = 16f;
 
-        private static readonly string[] Titles =
-        {
-            "GenneCaster", "Panels", "WASD", "Camera Manager", "Player Settings", "Time Manager",
-            "Map Loader", "Player Manager", "NameTag Manager", "Theme Loader", "MiniMap Manager",
-            "Leaderboard", "Closest Lava", "Scoreboard", "Kill Feed", "Presets", "Replay"
-        };
-
-        private static readonly PanelId[][] Columns =
-        {
-            new[] { PanelId.Main, PanelId.Universal, PanelId.Wasd, PanelId.Replay },
-            new[] { PanelId.Camera, PanelId.PlayerSettings, PanelId.Presets },
-            new[] { PanelId.Time, PanelId.Player, PanelId.Scoreboard },
-            new[] { PanelId.MapLoader, PanelId.Nametag, PanelId.Leaderboard },
-            new[] { PanelId.Theme, PanelId.MiniMap, PanelId.ClosestLava, PanelId.KillFeed }
-        };
-
-        private static readonly PanelId[] ReplayFirstColumn =
-            new[] { PanelId.Replay }.Concat(Columns[0].Where(id => id != PanelId.Replay)).ToArray();
-
-        private static readonly PanelId[] Switchable =
-            Columns.SelectMany(column => column).Where(id => id != PanelId.Main && id != PanelId.Universal && id != PanelId.Wasd).ToArray();
-
-        private readonly Panel[] panels = new Panel[(int)PanelId.Count];
-        private readonly ConfigEntry<string>[] positions = new ConfigEntry<string>[(int)PanelId.Count];
-        private readonly bool[] customPosition = new bool[(int)PanelId.Count];
-        private readonly Action<Panel>[] drawContent;
+        private readonly Panel[] panels = new Panel[PanelCount];
+        private readonly ConfigEntry<string>[] positions = new ConfigEntry<string>[PanelCount];
+        private readonly Action<Panel>[] drawContent = new Action<Panel>[PanelCount];
+        private readonly PanelLayout layout = new PanelLayout(PanelCount);
+        private readonly int[] columnOf = new int[PanelCount];
+        private readonly float[] rowOf = new float[PanelCount];
+        private readonly float[] heights = new float[PanelCount];
+        private PanelId? floating;
+        private int originColumn;
+        private int originIndex;
+        private int slotColumn;
+        private int slotIndex;
         private bool placed;
         private bool replayLayout;
 
         internal PanelOrchestrator()
         {
-            drawContent = new PanelContent(this).DrawContent;
+            var content = new PanelContent(this);
             Color32 accent = ColorSpace.Current.Color;
-            for (int i = 0; i < panels.Length; i++)
+            for (int i = 0; i < PanelCount; i++)
             {
-                int index = i;
-                var panel = new Panel(PanelWidth, Titles[i], accent);
-                positions[i] = CasterConfig.BindPanelPosition(PositionKey((PanelId)i));
-                if (PositionFormat.TryParse(positions[i].Value, out Vector2 saved))
-                {
-                    panel.SetPosition(saved);
-                    customPosition[i] = true;
-                }
-                panel.Moved += () => SavePosition(index);
-                panels[i] = panel;
+                var id = (PanelId)i;
+                panels[i] = new Panel(PanelWidth, PanelCatalog.Title(id), accent);
+                drawContent[i] = content.For(id);
+                positions[i] = CasterConfig.BindPanelPosition(PanelCatalog.PositionKey(id));
             }
-            panels[(int)PanelId.Main].Enabled = true;
-            panels[(int)PanelId.Main].Closed += () => CoreUI.Visible = false;
+            ArrangeFromConfig();
+            panels[(int)PanelId.Main].Expanded = true;
         }
 
-        private static string PositionKey(PanelId id) => id == PanelId.Wasd ? "Freecam" : id.ToString();
-
-        internal bool IsVisible(PanelId id) => panels[(int)id].Enabled;
-        internal void Toggle(PanelId id) => panels[(int)id].Enabled = !panels[(int)id].Enabled;
-        internal void ShowMain() => panels[(int)PanelId.Main].Enabled = true;
-
-        internal void DrawSwitch(Panel panel, PanelId id) => panel.Selectable(Titles[(int)id], IsVisible(id), () => Toggle(id));
-
-        internal void DrawSwitches(Panel panel)
+        private void ArrangeFromConfig()
         {
-            foreach (PanelId id in Switchable) DrawSwitch(panel, id);
+            PanelId[][] defaults = PanelCatalog.Columns;
+            for (int column = 0; column < defaults.Length; column++)
+            {
+                for (int row = 0; row < defaults[column].Length; row++)
+                {
+                    int i = (int)defaults[column][row];
+                    columnOf[i] = column;
+                    rowOf[i] = Margin + row * RowPitch;
+                }
+            }
+            for (int i = 0; i < PanelCount; i++)
+            {
+                if (!PositionFormat.TryParse(positions[i].Value, out Vector2 saved)) continue;
+                columnOf[i] = Mathf.RoundToInt((saved.x - Margin) / ColumnPitch);
+                rowOf[i] = saved.y;
+            }
+            layout.Arrange(columnOf, rowOf);
+            floating = null;
         }
 
         internal void Tick(float dt, float timelinePresence)
         {
             float blend = placed ? 1f - Mathf.Exp(-PositionDamping * dt) : 1f;
             placed = true;
-            foreach (Panel panel in panels) panel.Animate(dt);
-            bool replaying = SyncReplayLayout();
-            float top = replaying ? Mathf.Lerp(Margin, ReplayTimeline.Bottom + Gap, timelinePresence) : Margin;
-            for (int column = 0; column < Columns.Length; column++)
-                PlaceColumn(replaying && column == 0 ? ReplayFirstColumn : Columns[column], Margin + column * (PanelWidth + Gap), top, blend);
+            for (int i = 0; i < PanelCount; i++)
+            {
+                panels[i].Animate(dt);
+                heights[i] = panels[i].Rect.height;
+            }
+            PanelId? leader = SyncReplayLayout() ? PanelId.Replay : (PanelId?)null;
+            float top = leader != null ? Mathf.Lerp(Margin, ReplayTimeline.Bottom + Gap, timelinePresence) : Margin;
+            layout.Fit(Mathf.FloorToInt((UiScale.Width - Margin + Gap) / ColumnPitch));
+            TrackFloating(leader, top);
+            for (int column = 0; column < layout.ColumnCount; column++) PlaceColumn(column, leader, top, blend);
         }
 
         private bool SyncReplayLayout()
         {
             bool replaying = ReplaySession.IsReplaying;
-            if (replaying && !replayLayout) panels[(int)PanelId.Replay].Enabled = true;
+            if (replaying && !replayLayout) panels[(int)PanelId.Replay].Expanded = true;
             replayLayout = replaying;
             return replaying;
         }
 
-        private void PlaceColumn(PanelId[] column, float x, float top, float blend)
+        private void TrackFloating(PanelId? leader, float top)
         {
+            PanelId? dragged = DraggedPanel();
+            if (floating is PanelId released && dragged != floating) Dock(released, leader);
+            if (dragged is PanelId lifted && floating == null) Lift(lifted);
+            if (floating is not PanelId id) return;
+            Rect rect = panels[(int)id].Rect;
+            slotColumn = Mathf.Clamp(Mathf.FloorToInt((rect.center.x - Margin + Gap * 0.5f) / ColumnPitch), 0, layout.ColumnCount - 1);
+            slotIndex = layout.SlotIndex(slotColumn, leader, heights, Gap, top, rect.y - Gap * 0.5f);
+        }
+
+        private PanelId? DraggedPanel()
+        {
+            for (int i = 0; i < PanelCount; i++)
+                if (panels[i].IsDragging) return (PanelId)i;
+            return null;
+        }
+
+        private void Lift(PanelId id)
+        {
+            layout.Find(id, out originColumn, out originIndex);
+            layout.Lift(id);
+            floating = id;
+        }
+
+        private void Dock(PanelId id, PanelId? leader)
+        {
+            floating = null;
+            layout.Dock(id, Mathf.Min(slotColumn, layout.ColumnCount - 1), slotIndex, leader);
+            layout.Find(id, out int column, out int index);
+            if (column != originColumn || index != originIndex) SaveLayout();
+        }
+
+        private void PlaceColumn(int column, PanelId? leader, float top, float blend)
+        {
+            List<PanelId> order = layout.Order(column, leader);
+            bool opensSlot = floating != null && column == slotColumn;
+            float x = Margin + column * ColumnPitch;
             float y = top;
-            foreach (PanelId id in column)
+            for (int i = 0; i < order.Count; i++)
             {
-                int i = (int)id;
-                Panel panel = panels[i];
-                if (customPosition[i] || panel.IsDragging) continue;
-                var goal = new Vector2(x, y);
-                if (panel.IsShown)
-                {
-                    panel.SetPosition(Vector2.Lerp(panel.Rect.position, goal, blend));
-                    y += panel.Rect.height + Gap;
-                }
-                else
-                {
-                    panel.SetPosition(goal);
-                }
+                if (opensSlot && i == slotIndex) y += heights[(int)floating!.Value] + Gap;
+                int index = (int)order[i];
+                Panel panel = panels[index];
+                panel.SetPosition(Vector2.Lerp(panel.Rect.position, new Vector2(x, y), blend));
+                y += heights[index] + Gap;
             }
         }
 
         internal void Draw()
         {
-            for (int i = 0; i < panels.Length; i++)
+            for (int i = 0; i < PanelCount; i++)
             {
-                if (!panels[i].IsShown) continue;
                 panels[i].Draw(drawContent[i]);
-                panels[i].ClampToScreen();
+                if (panels[i].IsDragging) panels[i].ClampToScreen();
             }
         }
 
-        private void SavePosition(int index)
+        private void SaveLayout()
         {
-            customPosition[index] = true;
-            positions[index].Value = PositionFormat.Format(panels[index].Rect.position);
+            for (int column = 0; column < layout.ColumnCapacity; column++)
+            {
+                List<PanelId> order = layout.Order(column, null);
+                for (int row = 0; row < order.Count; row++)
+                    positions[(int)order[row]].Value = PositionFormat.Format(new Vector2(Margin + column * ColumnPitch, Margin + row * RowPitch));
+            }
         }
 
         internal void ResetLayout()
         {
-            for (int i = 0; i < panels.Length; i++)
-            {
-                customPosition[i] = false;
-                positions[i].Value = string.Empty;
-            }
+            for (int i = 0; i < PanelCount; i++) positions[i].Value = string.Empty;
+            ArrangeFromConfig();
         }
 
         internal void SetTheme(int index)
@@ -157,18 +181,7 @@ namespace GenneCaster.UI
         {
             Color32 accent = ColorSpace.Current.Color;
             foreach (Panel panel in panels) panel.SetAccent(accent);
-            for (int i = 0; i < panels.Length; i++)
-            {
-                if (PositionFormat.TryParse(positions[i].Value, out Vector2 saved))
-                {
-                    customPosition[i] = true;
-                    panels[i].SetPosition(saved);
-                }
-                else
-                {
-                    customPosition[i] = false;
-                }
-            }
+            ArrangeFromConfig();
         }
 
         public void Dispose()

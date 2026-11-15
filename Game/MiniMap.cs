@@ -84,13 +84,17 @@ namespace GenneCaster.Game
             try
             {
                 float size = miniMapSize;
-                var rect = new Rect(UI.UiScale.Width - size - CasterConfig.MiniMapOffsetX.Value, CasterConfig.MiniMapOffsetY.Value, size, size);
-                rect = UI.UiScale.ClampToScreen(rect);
+                HudPosition position = HudLayout.PositionOf(HudSlot.MiniMap);
+                bool left = HudPositions.IsLeft(position);
+                bool top = HudPositions.IsTop(position);
+                float x = left ? CasterConfig.MiniMapOffsetX.Value : UI.UiScale.Width - size - CasterConfig.MiniMapOffsetX.Value;
+                float y = top ? CasterConfig.MiniMapOffsetY.Value : UI.UiScale.Height - size - CasterConfig.MiniMapOffsetY.Value;
+                Rect rect = UI.UiScale.ClampToScreen(new Rect(x, y, size, size));
                 Rect moved = UI.UiScale.ClampToScreen(GUI.Window(windowId, rect, DrawWindow, GUIContent.none, GUIStyle.none));
                 if (moved.position != rect.position)
                 {
-                    CasterConfig.MiniMapOffsetX.Value = Mathf.Round(UI.UiScale.Width - moved.xMax);
-                    CasterConfig.MiniMapOffsetY.Value = Mathf.Round(moved.y);
+                    CasterConfig.MiniMapOffsetX.Value = Mathf.Round(left ? moved.x : UI.UiScale.Width - moved.xMax);
+                    CasterConfig.MiniMapOffsetY.Value = Mathf.Round(top ? moved.y : UI.UiScale.Height - moved.yMax);
                 }
             }
             finally { GUI.matrix = previous; }

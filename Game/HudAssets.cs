@@ -33,19 +33,11 @@ namespace GenneCaster.Game
             attempted = true;
             try
             {
-                using Stream? stream = typeof(HudAssets).Assembly.GetManifestResourceStream(BundleResource);
-                if (stream == null)
+                byte[]? bytes = EmbeddedResources.Read(BundleResource);
+                if (bytes == null)
                 {
                     Log.Error($"Missing embedded asset bundle {BundleResource}.");
                     return;
-                }
-                byte[] bytes = new byte[stream.Length];
-                int read = 0;
-                while (read < bytes.Length)
-                {
-                    int n = stream.Read(bytes, read, bytes.Length - read);
-                    if (n <= 0) break;
-                    read += n;
                 }
                 bundle = AssetBundle.LoadFromMemory(bytes);
                 if (bundle == null)

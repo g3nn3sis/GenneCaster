@@ -4,28 +4,33 @@
 
 using GenneCaster.Base;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace GenneCaster.UI
 {
     internal sealed class Panel : IDisposable
     {
         private const float Inset = 8f;
-        private const float HeaderY = 4f;
-        private const float HeaderHeight = 24f;
-        private const float HeaderBottom = HeaderY + HeaderHeight;
-        private const float CloseSize = 15f;
+        internal const float HeaderHeight = 24f;
+        private const float ArrowAreaWidth = 26f;
+        private const float ArrowWidth = 8f;
+        private const float ArrowHeight = 5f;
         private const float RowGap = 2f;
         internal const float ButtonHeight = 20f;
         internal const float LabelHeight = 16f;
         internal const float SliderHeight = 14f;
+        internal const float ListHeight = 160f;
         private const int TitleFontSize = 12;
         private const int ControlFontSize = 11;
         private const int MinimumFontSize = 8;
         private const int BorderThickness = 2;
         private const int CornerRadius = 12;
+        private const int ArrowTextureWidth = 32;
+        private const int ArrowTextureHeight = 20;
         private const float HeightDamping = 18f;
         private const float HeightSnap = 0.5f;
         private const float DragThreshold = 4f;
+        private const float StalePressTimeout = 0.5f;
 
         private static int nextWindowId = 0x47430000;
 
@@ -36,12 +41,12 @@ namespace GenneCaster.UI
         private readonly float[] sliceU = new float[4];
         private readonly float[] sliceV = new float[4];
         private Rect rect;
-        private float contentHeight;
-        private float shownHeight;
-        private bool hasMeasured;
-        private float visibility;
+        private float contentHeight = HeaderHeight;
+        private float shownHeight = HeaderHeight;
+        private bool pressed;
         private bool dragging;
-        private Vector2 dragOrigin;
+        private Vector2 dragged;
+        private float releasedFor;
         private float builtScale;
         private int cornerPixels;
         private Action<Panel>? content;
@@ -51,25 +56,21 @@ namespace GenneCaster.UI
         private static readonly Color32 BackgroundColor = new Color32(10, 10, 10, 160);
         private static readonly Color32 ButtonColor = new Color32(20, 5, 8, 190);
         private static readonly Color32 FieldColor = new Color32(20, 20, 20, 230);
-        private Texture2D? background, button, selected, field, close, closeHover;
-        private GUIStyle? buttonStyle, selectedStyle, fieldStyle, closeStyle, titleStyle, labelStyle;
+        private Texture2D? background, button, field, arrowDown, arrowUp;
+        private GUIStyle? buttonStyle, fieldStyle, titleStyle, labelStyle;
 
         internal string Title { get; }
-        internal bool Enabled { get; set; }
-        internal bool IsShown => Enabled || visibility > 0f;
+        internal bool Expanded { get; set; }
         internal bool IsDragging => dragging;
-        private float Opacity => Mathf.SmoothStep(0f, 1f, visibility);
         internal Rect Rect => rect;
         private float ContentWidth => rect.width - Inset * 2f;
-
-        internal event Action? Closed;
-        internal event Action? Moved;
+        private bool ShowsContent => Expanded || shownHeight > HeaderHeight;
+        private float Openness => contentHeight > HeaderHeight ? Mathf.Clamp01((shownHeight - HeaderHeight) / (contentHeight - HeaderHeight)) : 0f;
 
         internal Panel(float width, string title, Color32 accentColor)
         {
             Title = title;
             accent = accentColor;
-            shownHeight = HeaderBottom + Inset + ButtonHeight;
             rect = new Rect(0f, 0f, width, shownHeight);
         }
 
@@ -88,9 +89,8 @@ namespace GenneCaster.UI
 
         internal void Animate(float dt)
         {
-            visibility = Mathf.MoveTowards(visibility, Enabled ? 1f : 0f, dt / CoreUI.FadeDuration);
-            if (!Enabled) dragging = false;
-            if (hasMeasured) shownHeight = EaseHeight(shownHeight, contentHeight, dt);
+            DropStalePress(dt);
+            shownHeight = EaseHeight(shownHeight, Expanded ? contentHeight : HeaderHeight, dt);
             rect.height = shownHeight;
         }
 
@@ -102,70 +102,99 @@ namespace GenneCaster.UI
 
         internal void Draw(Action<Panel> drawContent)
         {
-            if (disposed || !IsShown) return;
+            if (disposed) return;
             content = drawContent;
             EnsureTextures();
-            Color previousColor = GUI.color;
-            bool previousEnabled = GUI.enabled;
-            GUI.color = new Color(previousColor.r, previousColor.g, previousColor.b, previousColor.a * Opacity);
-            GUI.enabled = previousEnabled && Enabled;
-            try
-            {
-                Vector2 before = rect.position;
-                rect.position = GUI.Window(windowId, rect, DrawWindow, GUIContent.none, GUIStyle.none).position;
-                TrackDrag(before);
-            }
-            finally
-            {
-                GUI.color = previousColor;
-                GUI.enabled = previousEnabled;
-            }
-        }
-
-        private void TrackDrag(Vector2 before)
-        {
-            if (!Enabled) return;
-            if (!dragging && rect.position != before)
-            {
-                dragging = true;
-                dragOrigin = before;
-            }
-            if (!dragging || Event.current.rawType != EventType.MouseUp) return;
-            dragging = false;
-            if (Vector2.Distance(rect.position, dragOrigin) < DragThreshold) rect.position = dragOrigin;
-            else Moved?.Invoke();
+            Vector2 before = rect.position;
+            rect.position = GUI.Window(windowId, rect, DrawWindow, GUIContent.none, GUIStyle.none).position;
+            TrackPress(rect.position - before);
         }
 
         private void DrawWindow(int id)
         {
             EnsureStyles();
+            bool showsContent = ShowsContent;
             DrawNineSlice(background!, new Rect(0f, 0f, rect.width, rect.height));
-            float closeX = rect.width - Inset - CloseSize;
-            GUI.Label(new Rect(Inset + 3f, HeaderY, closeX - Inset - 6f, HeaderHeight), Title, titleStyle);
-            if (GUI.Button(new Rect(closeX, HeaderY + (HeaderHeight - CloseSize) * 0.5f, CloseSize, CloseSize), "×", closeStyle))
-            {
-                Enabled = false;
-                Closed?.Invoke();
-            }
+            float arrowX = rect.width - ArrowAreaWidth;
+            GUI.Label(new Rect(Inset + 3f, 0f, arrowX - Inset - 3f, HeaderHeight), Title, titleStyle);
+            var arrowArea = new Rect(arrowX, 0f, ArrowAreaWidth, HeaderHeight);
+            if (GUI.Button(arrowArea, GUIContent.none, GUIStyle.none)) Expanded = !Expanded;
+            DrawArrow(arrowArea);
+            if (showsContent) DrawContent();
 
-            float top = HeaderBottom + RowGap;
+            var grip = new Rect(0f, 0f, arrowX, HeaderHeight);
+            Event current = Event.current;
+            if (GUI.enabled && current.type == EventType.MouseDown && current.button == 0 && grip.Contains(current.mousePosition)) BeginPress();
+            GUI.DragWindow(grip);
+        }
+
+        private void DrawArrow(Rect area)
+        {
+            if (Event.current.type != EventType.Repaint) return;
+            float flip = 1f - 2f * Openness;
+            float height = ArrowHeight * Mathf.Abs(flip);
+            if (height < 0.5f) return;
+            Texture2D arrow = flip > 0f ? arrowDown! : arrowUp!;
+            GUI.DrawTexture(new Rect(area.center.x - ArrowWidth * 0.5f, area.center.y - height * 0.5f, ArrowWidth, height), arrow);
+        }
+
+        private void DrawContent()
+        {
+            float top = HeaderHeight + RowGap;
+            Color previousColor = GUI.color;
+            bool previousEnabled = GUI.enabled;
+            GUI.color = new Color(previousColor.r, previousColor.g, previousColor.b, previousColor.a * Openness);
+            GUI.enabled = previousEnabled && Expanded;
             GUILayout.BeginArea(new Rect(Inset, top, ContentWidth, Mathf.Max(1f, rect.height - top - Inset)));
             GUILayout.BeginVertical();
             try { content?.Invoke(this); }
             catch (Exception e) when (!(e is ExitGUIException)) { Log.ExceptionOnce($"panel-{Title}", e, $"Drawing the {Title} panel failed"); }
             GUILayout.EndVertical();
-            if (Event.current.type == EventType.Repaint) MeasureContent(top + GUILayoutUtility.GetLastRect().height + Inset);
+            if (Event.current.type == EventType.Repaint) contentHeight = Mathf.Ceil(top + GUILayoutUtility.GetLastRect().height + Inset);
             GUILayout.EndArea();
-
-            if (Enabled) GUI.DragWindow(new Rect(0f, 0f, closeX - 3f, HeaderBottom));
+            GUI.color = previousColor;
+            GUI.enabled = previousEnabled;
         }
 
-        private void MeasureContent(float height)
+        private void BeginPress()
         {
-            contentHeight = Mathf.Ceil(height);
-            if (hasMeasured) return;
-            hasMeasured = true;
-            shownHeight = contentHeight;
+            pressed = true;
+            dragged = Vector2.zero;
+            releasedFor = 0f;
+        }
+
+        private void TrackPress(Vector2 moved)
+        {
+            if (!pressed) return;
+            if (moved != Vector2.zero)
+            {
+                dragging = true;
+                dragged += moved;
+            }
+            Event current = Event.current;
+            if (current.rawType == EventType.MouseUp && current.button == 0) EndPress(true);
+        }
+
+        private void EndPress(bool togglesOnClick)
+        {
+            pressed = false;
+            dragging = false;
+            if (dragged.magnitude >= DragThreshold) return;
+            rect.position -= dragged;
+            if (togglesOnClick) Expanded = !Expanded;
+        }
+
+        private void DropStalePress(float dt)
+        {
+            if (!pressed) return;
+            Mouse? mouse = Mouse.current;
+            if (mouse == null || mouse.leftButton.isPressed)
+            {
+                releasedFor = 0f;
+                return;
+            }
+            releasedFor += dt;
+            if (releasedFor >= StalePressTimeout) EndPress(false);
         }
 
         private void DrawNineSlice(Texture2D texture, Rect area)
@@ -202,8 +231,6 @@ namespace GenneCaster.UI
         }
 
         internal void Button(string text, Action? onClick, bool interactable = true) => DrawButton(text, onClick, interactable, buttonStyle!);
-
-        internal void Selectable(string text, bool isSelected, Action onClick) => DrawButton(text, onClick, true, isSelected ? selectedStyle! : buttonStyle!);
 
         private void DrawButton(string text, Action? onClick, bool interactable, GUIStyle style)
         {
@@ -296,15 +323,11 @@ namespace GenneCaster.UI
             }
             if (button != null) return;
             button = Textures.CreateTexture(64, (int)ButtonHeight, ButtonColor, accent, 1, 4);
-            selected = Textures.CreateTexture(64, (int)ButtonHeight, SelectedFill(accent), accent, 1, 4);
             field = Textures.CreateTexture(64, (int)ButtonHeight, FieldColor, accent, 1, 4);
-            close = Textures.CreateTexture((int)CloseSize, (int)CloseSize, new Color32(115, 25, 25, 235), new Color32(175, 50, 50, 255), 1, 4);
-            closeHover = Textures.CreateTexture((int)CloseSize, (int)CloseSize, new Color32(190, 35, 35, 255), new Color32(235, 75, 75, 255), 1, 4);
+            arrowDown = Textures.CreateTriangle(ArrowTextureWidth, ArrowTextureHeight, Color.white, true);
+            arrowUp = Textures.CreateTriangle(ArrowTextureWidth, ArrowTextureHeight, Color.white, false);
             if (buttonStyle != null) ApplyTextures();
         }
-
-        private static Color32 SelectedFill(Color32 color) =>
-            new Color32((byte)(color.r * 0.45f), (byte)(color.g * 0.45f), (byte)(color.b * 0.45f), 220);
 
         private void EnsureStyles()
         {
@@ -312,27 +335,23 @@ namespace GenneCaster.UI
             var none = new RectOffset(0, 0, 0, 0);
             const int border = 5;
             buttonStyle = new GUIStyle(GUI.skin.button) { alignment = TextAnchor.MiddleCenter, wordWrap = false, clipping = TextClipping.Clip, padding = new RectOffset(3, 3, 1, 1), margin = none, border = new RectOffset(border, border, border, border) };
-            selectedStyle = new GUIStyle(buttonStyle) { fontStyle = FontStyle.Bold };
             fieldStyle = new GUIStyle(GUI.skin.textField) { alignment = TextAnchor.MiddleCenter, clipping = TextClipping.Clip, padding = new RectOffset(4, 4, 1, 1), margin = none, border = new RectOffset(border, border, border, border) };
-            closeStyle = new GUIStyle(GUI.skin.button) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, fontSize = 11, padding = new RectOffset(0, 0, 0, 1), margin = none, border = new RectOffset(border, border, border, border) };
             titleStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, fontSize = TitleFontSize, fontStyle = FontStyle.Bold, padding = none, margin = none, clipping = TextClipping.Clip };
             labelStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, fontSize = ControlFontSize, padding = new RectOffset(2, 2, 0, 0), margin = none, wordWrap = true, clipping = TextClipping.Clip };
-            foreach (GUIStyle style in new[] { buttonStyle, selectedStyle, fieldStyle, closeStyle, titleStyle, labelStyle }) SetTextColor(style, Color.white);
+            foreach (GUIStyle style in new[] { buttonStyle, fieldStyle, titleStyle, labelStyle }) SetTextColor(style, Color.white);
             ApplyTextures();
         }
 
         private void ApplyTextures()
         {
-            SetBackground(buttonStyle!, button, button);
-            SetBackground(selectedStyle!, selected, selected);
-            SetBackground(fieldStyle!, field, field);
-            SetBackground(closeStyle!, close, closeHover);
+            SetBackground(buttonStyle!, button);
+            SetBackground(fieldStyle!, field);
         }
 
-        private static void SetBackground(GUIStyle style, Texture2D? normal, Texture2D? hover)
+        private static void SetBackground(GUIStyle style, Texture2D? texture)
         {
-            style.normal.background = style.focused.background = style.onNormal.background = style.onFocused.background = normal;
-            style.hover.background = style.active.background = style.onHover.background = style.onActive.background = hover;
+            style.normal.background = style.focused.background = style.onNormal.background = style.onFocused.background = texture;
+            style.hover.background = style.active.background = style.onHover.background = style.onActive.background = texture;
         }
 
         private static void SetTextColor(GUIStyle style, Color color)
@@ -350,21 +369,18 @@ namespace GenneCaster.UI
         private void DestroyTextures()
         {
             DestroyBackground();
-            foreach (Texture2D? texture in new[] { button, selected, field, close, closeHover })
+            foreach (Texture2D? texture in new[] { button, field, arrowDown, arrowUp })
                 if (texture != null) UnityEngine.Object.Destroy(texture);
-            button = selected = field = close = closeHover = null;
+            button = field = arrowDown = arrowUp = null;
         }
 
         public void Dispose()
         {
             if (disposed) return;
             disposed = true;
-            Enabled = false;
-            visibility = 0f;
+            Expanded = false;
             DestroyTextures();
             content = null;
-            Closed = null;
-            Moved = null;
         }
     }
 }

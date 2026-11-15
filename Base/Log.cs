@@ -3,9 +3,8 @@
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
 using BepInEx.Logging;
-using GenneCaster.Base;
 
-namespace GenneCaster
+namespace GenneCaster.Base
 {
     internal static class Log
     {

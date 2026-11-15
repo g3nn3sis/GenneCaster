@@ -54,7 +54,7 @@ namespace GenneCaster.Player
             {
                 bool fly = wasd && !ReplaySession.IsReplaying && mouse.rightButton.isPressed;
                 if (fly != flying) SetFlying(fly, tagger);
-                if (fly) Fly(player, tagger, mouse, keyboard);
+                if (fly) Fly(player, tagger, mouse);
             }
             catch (Exception e) { Log.ExceptionOnce("wasd", e, "WASD flight update failed"); }
         }
@@ -73,16 +73,16 @@ namespace GenneCaster.Player
             else SetNoClip(false);
         }
 
-        private void Fly(GTPlayer player, GorillaTagger tagger, Mouse mouse, Keyboard keyboard)
+        private void Fly(GTPlayer player, GorillaTagger tagger, Mouse mouse)
         {
             Transform rig = tagger.offlineVRRig.transform;
             Vector3 direction = Vector3.zero;
-            if (keyboard.wKey.isPressed) direction += rig.forward;
-            if (keyboard.sKey.isPressed) direction -= rig.forward;
-            if (keyboard.dKey.isPressed) direction += rig.right;
-            if (keyboard.aKey.isPressed) direction -= rig.right;
-            if (keyboard.spaceKey.isPressed) direction += rig.up;
-            if (keyboard.leftShiftKey.isPressed) direction -= rig.up;
+            if (CasterConfig.KeyHeld(CasterConfig.FlyForwardKey)) direction += rig.forward;
+            if (CasterConfig.KeyHeld(CasterConfig.FlyBackKey)) direction -= rig.forward;
+            if (CasterConfig.KeyHeld(CasterConfig.FlyRightKey)) direction += rig.right;
+            if (CasterConfig.KeyHeld(CasterConfig.FlyLeftKey)) direction -= rig.right;
+            if (CasterConfig.KeyHeld(CasterConfig.FlyUpKey)) direction += rig.up;
+            if (CasterConfig.KeyHeld(CasterConfig.FlyDownKey)) direction -= rig.up;
             player.transform.position += direction * (MovementSpeed * Time.deltaTime);
 
             Vector2 delta = mouse.delta.ReadValue();
@@ -90,7 +90,7 @@ namespace GenneCaster.Player
             pitch = Mathf.Clamp(pitch - delta.y * MouseSensitivity, -MaxPitch, MaxPitch);
             tagger.headCollider.transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
 
-            SetNoClip(keyboard.eKey.isPressed);
+            SetNoClip(CasterConfig.KeyHeld(CasterConfig.NoClipKey));
         }
 
         private void SetNoClip(bool noClip)

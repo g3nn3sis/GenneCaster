@@ -3,6 +3,7 @@
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
 using BepInEx.Configuration;
+using GenneCaster.Game;
 using GenneCaster.GameCamera;
 using System.IO;
 using System.Text;
@@ -36,11 +37,23 @@ namespace GenneCaster.Base
         internal static ConfigEntry<Key> PreviousPlayerKey = null!;
         internal static ConfigEntry<Key> ReplayPauseKey = null!;
         internal static ConfigEntry<Key> ReplayTimelineKey = null!;
+        internal static ConfigEntry<Key> OrbitLeftKey = null!;
+        internal static ConfigEntry<Key> OrbitRightKey = null!;
+        internal static ConfigEntry<Key> OrbitUpKey = null!;
+        internal static ConfigEntry<Key> OrbitDownKey = null!;
+        internal static ConfigEntry<Key> OrbitResetKey = null!;
 
         internal static ConfigEntry<bool> Wasd = null!;
         internal static ConfigEntry<bool> MouseClick = null!;
         internal static ConfigEntry<float> MovementSpeed = null!;
         internal static ConfigEntry<float> MouseSpeed = null!;
+        internal static ConfigEntry<Key> FlyForwardKey = null!;
+        internal static ConfigEntry<Key> FlyBackKey = null!;
+        internal static ConfigEntry<Key> FlyLeftKey = null!;
+        internal static ConfigEntry<Key> FlyRightKey = null!;
+        internal static ConfigEntry<Key> FlyUpKey = null!;
+        internal static ConfigEntry<Key> FlyDownKey = null!;
+        internal static ConfigEntry<Key> NoClipKey = null!;
 
         internal static ConfigEntry<bool> NameTags = null!;
         internal static ConfigEntry<bool> NameTagPlayerColor = null!;
@@ -53,6 +66,7 @@ namespace GenneCaster.Base
         internal static ConfigEntry<float> MiniMapHeight = null!;
         internal static ConfigEntry<float> MiniMapOffsetX = null!;
         internal static ConfigEntry<float> MiniMapOffsetY = null!;
+        internal static ConfigEntry<HudPosition> MiniMapPosition = null!;
         internal static ConfigEntry<bool> DiscordPresence = null!;
 
         internal static ConfigEntry<int> HudFont = null!;
@@ -63,6 +77,7 @@ namespace GenneCaster.Base
         internal static ConfigEntry<bool> LeaderboardFps = null!;
         internal static ConfigEntry<float> LeaderboardOffsetX = null!;
         internal static ConfigEntry<float> LeaderboardOffsetY = null!;
+        internal static ConfigEntry<HudPosition> LeaderboardPosition = null!;
 
         internal static ConfigEntry<bool> ClosestLavaEnabled = null!;
         internal static ConfigEntry<float> ClosestLavaScale = null!;
@@ -73,6 +88,7 @@ namespace GenneCaster.Base
         internal static ConfigEntry<float> ScoreboardScale = null!;
         internal static ConfigEntry<float> ScoreboardOffsetX = null!;
         internal static ConfigEntry<float> ScoreboardOffsetY = null!;
+        internal static ConfigEntry<HudPosition> ScoreboardPosition = null!;
         internal static ConfigEntry<string> ScoreboardTeamAName = null!;
         internal static ConfigEntry<string> ScoreboardTeamBName = null!;
         internal static ConfigEntry<int> ScoreboardTeamAScore = null!;
@@ -89,6 +105,7 @@ namespace GenneCaster.Base
         internal static ConfigEntry<float> KillFeedScale = null!;
         internal static ConfigEntry<float> KillFeedOffsetX = null!;
         internal static ConfigEntry<float> KillFeedOffsetY = null!;
+        internal static ConfigEntry<HudPosition> KillFeedPosition = null!;
 
         internal static ConfigEntry<string> PlayerName = null!;
         internal static ConfigEntry<float> PlayerRed = null!;
@@ -123,6 +140,11 @@ namespace GenneCaster.Base
             PushToTalkKey = config.Bind("Camera", "Hold To Talk Key", Key.V, "Hold to open the mic to all chat; release returns to the Microphone setting (push to talk by default).");
             NextPlayerKey = config.Bind("Camera", "Next Player Key", Key.RightBracket, "Spectate the next player in the list.");
             PreviousPlayerKey = config.Bind("Camera", "Previous Player Key", Key.LeftBracket, "Spectate the previous player in the list.");
+            OrbitLeftKey = config.Bind("Camera", "Orbit Left Key", Key.LeftArrow, "Hold to orbit the spectator camera left.");
+            OrbitRightKey = config.Bind("Camera", "Orbit Right Key", Key.RightArrow, "Hold to orbit the spectator camera right.");
+            OrbitUpKey = config.Bind("Camera", "Orbit Up Key", Key.UpArrow, "Hold to orbit the spectator camera up.");
+            OrbitDownKey = config.Bind("Camera", "Orbit Down Key", Key.DownArrow, "Hold to orbit the spectator camera down.");
+            OrbitResetKey = config.Bind("Camera", "Reset Orbit Key", Key.R, "Put the orbit camera back behind the spectated player.");
             ReplayPauseKey = config.Bind("Replay", "Pause Key", Key.P, "Pause and unpause the replay while in replay mode.");
             ReplayTimelineKey = config.Bind("Replay", "Timeline Key", Key.F1, "Show and hide the replay timeline while in replay mode.");
 
@@ -130,6 +152,13 @@ namespace GenneCaster.Base
             MouseClick = config.Bind("Freecam", "Mouse Click", false, "Left click presses whatever is under the cursor with the right hand.");
             MovementSpeed = Range(config, "Freecam", "Movement Speed", 10f, 5f, 35f);
             MouseSpeed = Range(config, "Freecam", "Mouse Sensitivity", 0.3f, 0.05f, 2f);
+            FlyForwardKey = config.Bind("Freecam", "Forward Key", Key.W, "Fly forward while holding right mouse.");
+            FlyBackKey = config.Bind("Freecam", "Back Key", Key.S, "Fly back while holding right mouse.");
+            FlyLeftKey = config.Bind("Freecam", "Left Key", Key.A, "Fly left while holding right mouse.");
+            FlyRightKey = config.Bind("Freecam", "Right Key", Key.D, "Fly right while holding right mouse.");
+            FlyUpKey = config.Bind("Freecam", "Up Key", Key.Space, "Fly up while holding right mouse.");
+            FlyDownKey = config.Bind("Freecam", "Down Key", Key.LeftShift, "Fly down while holding right mouse.");
+            NoClipKey = config.Bind("Freecam", "No Clip Key", Key.E, "Hold while flying your own player to pass through walls.");
 
             NameTags = config.Bind("Nametags", "Enabled", false);
             NameTagPlayerColor = config.Bind("Nametags", "Player Color", false);
@@ -141,29 +170,32 @@ namespace GenneCaster.Base
             MiniMapDraggable = config.Bind("MiniMap", "Draggable", false);
             MiniMapSize = Range(config, "MiniMap", "Size", 520f, 100f, 520f, "Width and height at 1080p, scaled with the interface.");
             MiniMapHeight = Range(config, "MiniMap", "Camera Height", 8f, 1f, 50f);
-            MiniMapOffsetX = Range(config, "MiniMap", "Offset X", 10f, 0f, 8000f, "Distance from the right edge of the screen at 1080p.");
-            MiniMapOffsetY = Range(config, "MiniMap", "Offset Y", 10f, 0f, 8000f, "Distance from the top edge of the screen at 1080p.");
+            MiniMapOffsetX = Range(config, "MiniMap", "Offset X", 10f, 0f, 8000f, "Distance from the side edge of its corner at 1080p.");
+            MiniMapOffsetY = Range(config, "MiniMap", "Offset Y", 10f, 0f, 8000f, "Distance from the top or bottom edge of its corner at 1080p.");
+            MiniMapPosition = config.Bind("MiniMap", "Position", HudPosition.TopRight, "Corner the minimap sits in: BottomLeft, BottomRight or TopRight. Only one overlay can use a corner.");
 
             DiscordPresence = config.Bind("Discord", "Rich Presence", true, "Show what you are doing on your Discord profile.");
 
             HudFont = config.Bind("HUD", "Font Index", 0, new ConfigDescription("Index into the fonts found in the game, shared by the leaderboard and closest-lava overlays.", new AcceptableValueRange<int>(0, 255)));
 
-            LeaderboardEnabled = config.Bind("Leaderboard", "Enabled", false, "Show the bottom-left player leaderboard.");
+            LeaderboardEnabled = config.Bind("Leaderboard", "Enabled", false, "Show the player leaderboard.");
             LeaderboardScale = Range(config, "Leaderboard", "Scale", 1f, 0.5f, 2f, "Size multiplier on top of automatic resolution scaling.");
             LeaderboardPlatformIcons = config.Bind("Leaderboard", "Platform Icons", true, "Show each player's Steam or Meta icon.");
             LeaderboardFps = config.Bind("Leaderboard", "Show FPS", false, "Show each player's frame rate next to their name.");
             LeaderboardOffsetX = Range(config, "Leaderboard", "Offset X", 0f, -800f, 800f, "Shift left (negative) or right (positive), in 1080p pixels.");
             LeaderboardOffsetY = Range(config, "Leaderboard", "Offset Y", 0f, -500f, 500f, "Move down (negative) or up (positive), in 1080p pixels.");
+            LeaderboardPosition = config.Bind("Leaderboard", "Position", HudPosition.BottomLeft, "Corner the leaderboard sits in: BottomLeft, BottomRight or TopRight. Only one overlay can use a corner.");
 
             ClosestLavaEnabled = config.Bind("ClosestLava", "Enabled", false, "Show the bottom-center distance to the nearest tagged (lava) player from the spectated player.");
             ClosestLavaScale = Range(config, "ClosestLava", "Scale", 1f, 0.5f, 2f, "Size multiplier on top of automatic resolution scaling.");
             ClosestLavaOffsetX = Range(config, "ClosestLava", "Offset X", 0f, -800f, 800f, "Shift left (negative) or right (positive), in 1080p pixels.");
             ClosestLavaOffsetY = Range(config, "ClosestLava", "Offset Y", 0f, -500f, 500f, "Move down (negative) or up (positive), in 1080p pixels.");
 
-            ScoreboardEnabled = config.Bind("Scoreboard", "Enabled", false, "Show the top-center two-team scoreboard with a timer.");
+            ScoreboardEnabled = config.Bind("Scoreboard", "Enabled", false, "Show the two-team scoreboard with a timer.");
             ScoreboardScale = Range(config, "Scoreboard", "Scale", 1f, 0.5f, 2f, "Size multiplier on top of automatic resolution scaling.");
             ScoreboardOffsetX = Range(config, "Scoreboard", "Offset X", 0f, -800f, 800f, "Shift left (negative) or right (positive), in 1080p pixels.");
             ScoreboardOffsetY = Range(config, "Scoreboard", "Offset Y", 0f, -500f, 500f, "Move down (negative) or up (positive), in 1080p pixels.");
+            ScoreboardPosition = config.Bind("Scoreboard", "Position", HudPosition.TopCenter, "Where the scoreboard sits: TopCenter, BottomLeft, BottomRight or TopRight. Only one overlay can use a corner.");
             ScoreboardTeamAName = config.Bind("Scoreboard", "Team A Name", "TEAM A", "Left team name.");
             ScoreboardTeamBName = config.Bind("Scoreboard", "Team B Name", "TEAM B", "Right team name.");
             ScoreboardTeamAScore = config.Bind("Scoreboard", "Team A Score", 0, new ConfigDescription("Left team score.", new AcceptableValueRange<int>(0, 999)));
@@ -176,10 +208,11 @@ namespace GenneCaster.Base
             ScoreboardTeamBUpKey = config.Bind("Scoreboard", "Team B Score Up Key", Key.K, "Add a point to team B.");
             ScoreboardTeamBDownKey = config.Bind("Scoreboard", "Team B Score Down Key", Key.L, "Remove a point from team B.");
 
-            KillFeedEnabled = config.Bind("KillFeed", "Enabled", false, "Show the top-right feed of players as they get tagged.");
+            KillFeedEnabled = config.Bind("KillFeed", "Enabled", false, "Show the feed of players as they get tagged.");
             KillFeedScale = Range(config, "KillFeed", "Scale", 1f, 0.5f, 2f, "Size multiplier on top of automatic resolution scaling.");
             KillFeedOffsetX = Range(config, "KillFeed", "Offset X", 0f, -800f, 800f, "Shift left (negative) or right (positive), in 1080p pixels.");
             KillFeedOffsetY = Range(config, "KillFeed", "Offset Y", 0f, -500f, 500f, "Move down (negative) or up (positive), in 1080p pixels.");
+            KillFeedPosition = config.Bind("KillFeed", "Position", HudPosition.TopRight, "Corner the kill feed sits in: BottomLeft, BottomRight or TopRight. Only one overlay can use a corner.");
 
             PlayerName = config.Bind("Player", "Name", "GENNECASTER", "Up to 12 letters or digits.");
             PlayerRed = Range(config, "Player", "Red", 0f, 0f, 1f);
@@ -189,7 +222,7 @@ namespace GenneCaster.Base
             DisableVSync = config.Bind("Game", "Disable VSync", true, "Turn off VSync so the spectator view runs at the highest frame rate.");
             DisableAfkKick = config.Bind("Game", "Disable AFK Kick", true, "Stop the game from kicking you for being idle while spectating.");
 
-            Theme = config.Bind("Interface", "Theme Name", "Red", "Name of a theme from the Theme Loader list.");
+            Theme = config.Bind("Interface", "Theme Name", "Red", "Name of a theme from the Theme panel's list.");
             UiScale = Range(config, "Interface", "UI Scale", 0.75f, 0.5f, 2f, "Multiplier on top of automatic resolution scaling.");
             MenuKey = config.Bind("Interface", "Menu Key", Key.Escape, "Key that shows and hides the panels.");
             AutoSave = config.Bind("Interface", "Autosave", true, "Save setting changes automatically. When off, save with the Presets panel's Save Settings button or by saving a preset.");
@@ -227,10 +260,7 @@ namespace GenneCaster.Base
 
         internal static void Save()
         {
-            if (!dirty || file == null) return;
-            dirty = false;
-            try { Write(file); }
-            catch (Exception e) { Log.Exception(e, "Saving the config failed"); }
+            if (dirty) ForceSave();
         }
 
         internal static void ForceSave()
@@ -260,7 +290,7 @@ namespace GenneCaster.Base
         internal static bool KeyPressed(Key key)
         {
             Keyboard? keyboard = Keyboard.current;
-            if (key == Key.None || keyboard == null) return false;
+            if (key == Key.None || keyboard == null || KeyBinds.Capturing) return false;
             try { return keyboard[key].wasPressedThisFrame; }
             catch (ArgumentOutOfRangeException) { return false; }
         }
@@ -270,20 +300,9 @@ namespace GenneCaster.Base
         internal static bool KeyHeld(Key key)
         {
             Keyboard? keyboard = Keyboard.current;
-            if (key == Key.None || keyboard == null) return false;
+            if (key == Key.None || keyboard == null || KeyBinds.Capturing) return false;
             try { return keyboard[key].isPressed; }
             catch (ArgumentOutOfRangeException) { return false; }
-        }
-    }
-
-    internal sealed class CasterConfigSaver : ObjectComponent
-    {
-        internal void Update() => CasterConfig.Tick();
-
-        protected override void OnApplicationQuit()
-        {
-            CasterConfig.SaveOnExit();
-            base.OnApplicationQuit();
         }
     }
 }

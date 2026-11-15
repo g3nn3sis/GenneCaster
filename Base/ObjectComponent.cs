@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace GenneCaster.Base
 {
-    public abstract class ObjectComponent : MonoBehaviour
+    internal abstract class ObjectComponent : MonoBehaviour
     {
         protected virtual void Awake()
         {

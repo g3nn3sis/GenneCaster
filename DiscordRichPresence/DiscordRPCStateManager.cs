@@ -3,175 +3,105 @@
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
 using GenneCaster.Base;
-using GorillaNetworking;
+using GenneCaster.UI;
 using Photon.Pun;
-using static GenneCaster.DiscordRichPresence.DiscordRPCManager;
+using Photon.Realtime;
 
 namespace GenneCaster.DiscordRichPresence
 {
-    internal class DiscordRPCStateManager : ObjectComponent
+    internal sealed class DiscordRPCStateManager : ObjectComponent
     {
-        internal enum RPCState
+        private const string DefaultDetails = "Exploring Gorilla Tag";
+
+        private ZoneData[] zones = Array.Empty<ZoneData>();
+        private string? lastDetails;
+        private string? lastState;
+        private string? lastPartyId;
+        private int lastPartySize;
+        private int lastPartyMax;
+        private bool cleared;
+        private string? detailsSceneName;
+        private string cachedDetails = DefaultDetails;
+        private bool detailsComputed;
+
+        internal static void SetLoadingPresence()
         {
-            Singleplayer,
-            Multiplayer
-        }
-
-        internal RPCState currentGameState = RPCState.Singleplayer;
-
-        internal ZoneData[] currentGTZoneData = Array.Empty<ZoneData>();
-        internal ZoneData? currentActiveGTZone;
-
-        private string? _lastPartyId;
-        private int _lastPartySize;
-        private int _lastPartyMax;
-
-        private string? _lastDetails;
-        private string? _lastState;
-        private bool _cleared;
-
-        private string? _detailsSceneName;
-        private string _detailsCached = "Exploring Gorilla Tag";
-        private bool _detailsComputed;
-
-        private void OnEnable()
-        {
-            ZoneManagement.OnZoneChange += OnZoneChange;
-        }
-
-        private void OnDisable()
-        {
-            ZoneManagement.OnZoneChange -= OnZoneChange;
-        }
-
-        private void OnZoneChange(ZoneData[] zones)
-        {
-            currentGTZoneData = zones;
-        }
-
-        public static void SetLoadingPresence()
-        {
-            _rpc?.UpdatePresence(
-                details: "Loading GenneCaster",
+            DiscordRPCManager.Client?.UpdatePresence(
+                details: $"Loading {PluginInfo.Name}",
                 state: $"v{PluginInfo.Version}",
                 largeImageKey: "large",
-                largeImageText: "GenneCaster"
-            );
+                largeImageText: PluginInfo.Name);
         }
+
+        private void OnEnable() => ZoneManagement.OnZoneChange += OnZoneChange;
+
+        private void OnDisable() => ZoneManagement.OnZoneChange -= OnZoneChange;
+
+        private void OnZoneChange(ZoneData[] changed) => zones = changed;
 
         private void Update()
         {
-            if (_rpc == null)
-                return;
-
+            DiscordRPCWrapper? client = DiscordRPCManager.Client;
+            if (client == null) return;
             if (!CasterConfig.DiscordPresence.Value)
             {
-                ClearPresence();
+                ClearPresence(client);
                 return;
             }
-            _cleared = false;
-
-            UpdateGameState();
-            UpdateActiveZone();
-            UpdateParty();
+            cleared = false;
+            PublishPresence(client);
         }
 
-        private void ClearPresence()
+        private void ClearPresence(DiscordRPCWrapper client)
         {
-            if (_cleared || !_rpc!.IsConnected) return;
-            _rpc.ClearPresence();
-            _cleared = true;
-            _lastDetails = null;
-            _lastState = null;
-            _lastPartyId = null;
+            if (cleared || !client.IsConnected) return;
+            client.ClearPresence();
+            cleared = true;
+            lastDetails = null;
+            lastState = null;
+            lastPartyId = null;
         }
 
-        private void UpdateGameState()
+        private void PublishPresence(DiscordRPCWrapper client)
         {
-            RPCState newState = PhotonNetwork.InRoom
-                ? RPCState.Multiplayer
-                : RPCState.Singleplayer;
+            bool multiplayer = PhotonNetwork.InRoom;
+            Room? room = multiplayer ? PhotonNetwork.CurrentRoom : null;
+            string? partyId = room?.Name;
+            int partySize = room?.PlayerCount ?? 0;
+            int partyMax = room?.MaxPlayers ?? 0;
+            string details = DetailsFor(ActiveZone());
+            string state = multiplayer ? "Playing Multiplayer" : "Playing Singleplayer";
+            if (lastDetails == details && lastState == state && lastPartyId == partyId && lastPartySize == partySize && lastPartyMax == partyMax) return;
 
-            currentGameState = newState;
+            lastDetails = details;
+            lastState = state;
+            lastPartyId = partyId;
+            lastPartySize = partySize;
+            lastPartyMax = partyMax;
+            client.UpdatePresence(details: details, state: state, partyId: partyId, partySize: partySize, partyMax: partyMax, clearParty: partyId == null);
         }
 
-        private void UpdateActiveZone()
+        private ZoneData? ActiveZone()
         {
-            ZoneData? activeZone = null;
+            foreach (ZoneData zone in zones)
+                if (zone.active) return zone;
+            return null;
+        }
 
-            foreach (ZoneData zone in currentGTZoneData)
-            {
-                if (zone.active)
-                {
-                    activeZone = zone;
-                    break;
-                }
-            }
-
-            currentActiveGTZone = activeZone;
+        private string DetailsFor(ZoneData? zone)
+        {
+            string? sceneName = zone?.sceneName;
+            if (detailsComputed && sceneName == detailsSceneName) return cachedDetails;
+            cachedDetails = zone != null ? $"Exploring {ZoneDisplayName(sceneName)}" : DefaultDetails;
+            detailsSceneName = sceneName;
+            detailsComputed = true;
+            return cachedDetails;
         }
 
         private static string ZoneDisplayName(string? sceneName)
         {
             string name = (sceneName ?? string.Empty).Split('_')[0].TrimEnd('0', '1', '2', '3', '4', '5', '6', '7', '8', '9');
-            return name.Length > 0 ? UI.DisplayNames.Humanize(name) : "Gorilla Tag";
-        }
-
-        private void UpdateParty()
-        {
-            string? partyId = null;
-            int partySize = 0;
-            int partyMax = 0;
-
-            if (currentGameState == RPCState.Multiplayer)
-            {
-                var room = PhotonNetwork.CurrentRoom;
-
-                if (room != null)
-                {
-                    partyId = room.Name;
-                    partySize = room.PlayerCount;
-                    partyMax = room.MaxPlayers;
-                }
-            }
-
-            string? sceneName = currentActiveGTZone != null ? currentActiveGTZone.sceneName : null;
-            if (!_detailsComputed || sceneName != _detailsSceneName)
-            {
-                _detailsCached = currentActiveGTZone != null ? $"Exploring {ZoneDisplayName(sceneName)}" : "Exploring Gorilla Tag";
-                _detailsSceneName = sceneName;
-                _detailsComputed = true;
-            }
-            string details = _detailsCached;
-
-            string state = currentGameState == RPCState.Multiplayer
-                ? "Playing Multiplayer"
-                : "Playing Singleplayer";
-
-            bool changed =
-                _lastDetails != details ||
-                _lastState != state ||
-                _lastPartyId != partyId ||
-                _lastPartySize != partySize ||
-                _lastPartyMax != partyMax;
-
-            if (!changed)
-                return;
-
-            _lastDetails = details;
-            _lastState = state;
-
-            _lastPartyId = partyId;
-            _lastPartySize = partySize;
-            _lastPartyMax = partyMax;
-
-            _rpc!.UpdatePresence(
-                details: details,
-                state: state,
-                partyId: partyId,
-                partySize: partySize,
-                partyMax: partyMax
-            );
+            return name.Length > 0 ? DisplayNames.Humanize(name) : "Gorilla Tag";
         }
     }
 }

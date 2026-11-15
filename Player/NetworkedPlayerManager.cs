@@ -30,7 +30,9 @@ namespace GenneCaster.Player
             ?? typeof(VRRig).GetProperty("InitializedCosmetics", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         private static readonly Dictionary<string, int> knownPlatforms = new Dictionary<string, int>();
         private static readonly Dictionary<string, float> firstSeen = new Dictionary<string, float>();
+        private static readonly Dictionary<string, (int Value, float RetryAt)> platformGuesses = new Dictionary<string, (int Value, float RetryAt)>();
         private const float CosmeticsLoadGrace = 5f;
+        private const float PlatformRetryInterval = 1f;
 
         internal static VRRig[]? activeRigs;
         internal static VRRig? selectedPlayer;
@@ -132,15 +134,16 @@ namespace GenneCaster.Player
             if (index >= 0) SwitchPlayerIndex(index);
         }
 
+        internal static bool IsOtherPlayer(VRRig? rig) => rig != null && !rig.isOfflineVRRig;
+
         private static void SelectOtherPlayer(int otherIndex)
         {
             VRRig[]? rigs = activeRigs;
             if (rigs == null) return;
-            VRRig? local = LocalRig;
             int seen = 0;
             for (int i = 0; i < rigs.Length; i++)
             {
-                if (rigs[i] == local) continue;
+                if (!IsOtherPlayer(rigs[i])) continue;
                 if (seen == otherIndex) { SwitchPlayerIndex(i); return; }
                 seen++;
             }
@@ -165,40 +168,48 @@ namespace GenneCaster.Player
 
         internal static int GetPlatform(VRRig rig)
         {
-            if (rig == null || rig.Creator == null) return 0;
+            if (rig == null || rig.Creator == null) return Platform.Unknown;
             string userId = rig.Creator.UserId ?? string.Empty;
             string key = userId.Length > 0 ? userId : $"actor:{rig.Creator.ActorNumber}";
             if (knownPlatforms.TryGetValue(key, out int known)) return known;
+            float now = Time.unscaledTime;
+            if (platformGuesses.TryGetValue(key, out (int Value, float RetryAt) guess) && now < guess.RetryAt) return guess.Value;
 
-            int platform = 0;
-            string source = "none";
-            Photon.Realtime.Player? player = null;
-            int actorNumber = rig.Creator.ActorNumber;
-            foreach (Photon.Realtime.Player candidate in PhotonNetwork.PlayerList)
+            int platform = ReadPlatform(rig, out string source);
+            if (platform == Platform.Unknown)
             {
-                if (candidate.ActorNumber != actorNumber) continue;
-                player = candidate;
-                break;
+                int fallback = CosmeticsLoaded(rig, key) ? Platform.Meta : Platform.Unknown;
+                platformGuesses[key] = (fallback, now + PlatformRetryInterval);
+                return fallback;
             }
+            knownPlatforms[key] = platform;
+            platformGuesses.Remove(key);
+            Log.Info($"Platform for {rig.Creator.NickName}: {(platform == Platform.Steam ? "Steam" : "Meta")} (from {source}).");
+            return platform;
+        }
+
+        private static int ReadPlatform(VRRig rig, out string source)
+        {
+            source = "cosmetics";
+            Photon.Realtime.Player? player = FindPlayer(rig.Creator.ActorNumber);
             if (player != null && player.CustomProperties.TryGetValue("platform", out object platformField))
             {
                 string value = platformField?.ToString() ?? string.Empty;
-                platform = Platform.FromProperty(value);
-                source = $"property '{value.ToLowerInvariant()}'";
+                int declared = Platform.FromProperty(value);
+                if (declared != Platform.Unknown)
+                {
+                    source = $"property '{value.ToLowerInvariant()}'";
+                    return declared;
+                }
             }
-            if (platform == Platform.Unknown)
-            {
-                string cosmetics = CosmeticsField?.GetValue(rig) as string ?? string.Empty;
-                platform = Platform.FromCosmetics(cosmetics);
-                if (platform == Platform.Unknown) return CosmeticsLoaded(rig, key) ? Platform.Meta : Platform.Unknown;
-                source = "cosmetics";
-            }
-            if (platform != Platform.Unknown)
-            {
-                knownPlatforms[key] = platform;
-                Log.Info($"Platform for {rig.Creator.NickName}: {(platform == Platform.Steam ? "Steam" : "Meta")} (from {source}).");
-            }
-            return platform;
+            return Platform.FromCosmetics(CosmeticsField?.GetValue(rig) as string ?? string.Empty);
+        }
+
+        private static Photon.Realtime.Player? FindPlayer(int actorNumber)
+        {
+            foreach (Photon.Realtime.Player candidate in PhotonNetwork.PlayerList)
+                if (candidate.ActorNumber == actorNumber) return candidate;
+            return null;
         }
 
         private static bool CosmeticsLoaded(VRRig rig, string key)

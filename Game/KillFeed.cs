@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace GenneCaster.Game
 {
-    internal sealed class KillFeed : ObjectComponent
+    internal sealed class KillFeed : HudOverlay
     {
         internal static new bool enabled { get => CasterConfig.KillFeedEnabled.Value; set => CasterConfig.KillFeedEnabled.Value = value; }
 
@@ -21,7 +21,7 @@ namespace GenneCaster.Game
         private const float FadeOut = 0.6f;
         private const float RowSpacing = 6f;
         private const float FallbackRowHeight = 48f;
-        private const float BaseInset = 12f;
+        private const float Inset = 12f;
 
         private static readonly Color TaggedColor = new Color(1f, 0.33f, 0.05f, 1f);
         private static readonly string TaggedHex = ColorUtility.ToHtmlStringRGB(TaggedColor);
@@ -45,34 +45,43 @@ namespace GenneCaster.Game
         private readonly List<Row> rows = new List<Row>();
         private readonly Dictionary<VRRig, bool> taggedState = new Dictionary<VRRig, bool>();
 
-        private GameObject? instance;
         private RectTransform? template;
         private RectTransform? feed;
         private float rowHeight = FallbackRowHeight;
-        private int appliedFont = -1;
-        private bool failed;
         private bool showingReplay;
 
-        private static bool Active => enabled && (PhotonNetwork.InRoom || ReplaySession.IsReplaying);
+        protected override bool Active => enabled && (PhotonNetwork.InRoom || ReplaySession.IsReplaying);
 
-        internal void LateUpdate()
+        protected override GameObject? Prefab => HudAssets.ClosestLavaPrefab;
+
+        protected override bool Bind(GameObject canvas)
         {
-            if (failed) return;
-            if (!Active)
-            {
-                taggedState.Clear();
-                entries.Clear();
-                if (instance != null && instance.activeSelf) instance.SetActive(false);
-                return;
-            }
+            template = canvas.transform.Find("ClosestLava") as RectTransform;
+            TMP_Text? probe = template != null ? template.Find("Value")?.GetComponent<TMP_Text>() : null;
+            if (template == null || probe == null) return false;
 
+            rowHeight = template.rect.height > 1f ? template.rect.height : FallbackRowHeight;
+            template.gameObject.SetActive(false);
+
+            var feedGo = new GameObject("Feed", typeof(RectTransform));
+            feed = (RectTransform)feedGo.transform;
+            feed.SetParent(canvas.transform, false);
+            feed.anchorMin = feed.anchorMax = feed.pivot = new Vector2(1f, 1f);
+            feed.sizeDelta = Vector2.zero;
+            return true;
+        }
+
+        protected override void Idle()
+        {
+            taggedState.Clear();
+            entries.Clear();
+        }
+
+        protected override void Refresh()
+        {
             if (ReplaySession.Player is ReplayPlayer replay) ShowReplay(replay);
             else ShowLive();
-
-            if (instance == null && !Build()) return;
-            if (!instance!.activeSelf) instance.SetActive(true);
-            try { Refresh(); }
-            catch (Exception e) { Log.ExceptionOnce("killfeed", e, "Updating the kill feed failed"); }
+            DrawEntries();
         }
 
         private void ShowLive()
@@ -111,7 +120,7 @@ namespace GenneCaster.Game
             foreach (VRRig rig in rigs)
             {
                 if (rig == null || rig.isOfflineVRRig) continue;
-                bool tagged = IsTagged(rig);
+                bool tagged = RigTagState.IsTagged(rig);
                 if (taggedState.TryGetValue(rig, out bool was))
                 {
                     if (tagged && !was) Push(rig.Creator?.NickName ?? "Player");
@@ -144,54 +153,22 @@ namespace GenneCaster.Game
                 if (now - entries[i].Born >= Lifetime) entries.RemoveAt(i);
         }
 
-        private bool Build()
+        private void DrawEntries()
         {
-            if (!HudAssets.Ready || HudAssets.ClosestLavaPrefab == null) { failed = true; return false; }
-            instance = Instantiate(HudAssets.ClosestLavaPrefab);
-            instance.name = "_GenneCaster KillFeed";
-            DontDestroyOnLoad(instance);
-
-            template = instance.transform.Find("ClosestLava") as RectTransform;
-            TMP_Text? probe = template != null ? template.Find("Value")?.GetComponent<TMP_Text>() : null;
-            if (template == null || probe == null)
-            {
-                Log.Error("Kill feed row template is not as expected.");
-                failed = true;
-                Destroy(instance);
-                instance = null;
-                return false;
-            }
-
-            rowHeight = template.rect.height > 1f ? template.rect.height : FallbackRowHeight;
-            template.gameObject.SetActive(false);
-
-            var feedGo = new GameObject("Feed", typeof(RectTransform));
-            feed = (RectTransform)feedGo.transform;
-            feed.SetParent(instance.transform, false);
-            feed.anchorMin = feed.anchorMax = feed.pivot = new Vector2(1f, 1f);
-            feed.sizeDelta = Vector2.zero;
-            return true;
-        }
-
-        private void Refresh()
-        {
-            float scale = CasterConfig.KillFeedScale.Value;
-            feed!.localScale = Vector3.one * scale;
-            feed.anchoredPosition = new Vector2(-BaseInset + CasterConfig.KillFeedOffsetX.Value, -BaseInset + CasterConfig.KillFeedOffsetY.Value);
-
-            int font = CasterConfig.HudFont.Value;
-            if (font != appliedFont)
-            {
-                appliedFont = font;
-                HudAssets.ApplyFont(instance!);
-            }
+            HudPosition position = HudLayout.PositionOf(HudSlot.KillFeed);
+            Place(feed!, position, Inset, CasterConfig.KillFeedScale, CasterConfig.KillFeedOffsetX, CasterConfig.KillFeedOffsetY);
+            ApplyFontIfChanged();
+            Vector2 corner = AnchorOf(position);
+            float direction = HudPositions.IsTop(position) ? -1f : 1f;
+            TextAlignmentOptions alignment = HudPositions.IsLeft(position) ? TextAlignmentOptions.MidlineLeft : TextAlignmentOptions.MidlineRight;
 
             float now = Time.unscaledTime;
             for (int i = 0; i < entries.Count; i++)
             {
                 Entry entry = entries[i];
                 Row row = GetRow(i);
-                row.Rt.anchoredPosition = new Vector2(0f, -i * (rowHeight + RowSpacing));
+                Align(row, corner, alignment);
+                row.Rt.anchoredPosition = new Vector2(0f, direction * i * (rowHeight + RowSpacing));
 
                 string text = $"<color=#{TaggedHex}>{entry.Name}</color>  TAGGED";
                 if (row.Text != text) { row.Text = text; row.Value.text = text; }
@@ -203,6 +180,17 @@ namespace GenneCaster.Game
             }
             for (int i = entries.Count; i < rows.Count; i++)
                 if (rows[i].Go.activeSelf) rows[i].Go.SetActive(false);
+        }
+
+        private static void Align(Row row, Vector2 corner, TextAlignmentOptions alignment)
+        {
+            if (row.Rt.pivot != corner)
+            {
+                row.Rt.anchorMin = corner;
+                row.Rt.anchorMax = corner;
+                row.Rt.pivot = corner;
+            }
+            if (row.Value.alignment != alignment) row.Value.alignment = alignment;
         }
 
         private Row GetRow(int index)
@@ -226,25 +214,11 @@ namespace GenneCaster.Game
                     Group = go.GetComponent<CanvasGroup>() ?? go.AddComponent<CanvasGroup>(),
                 };
                 rows.Add(row);
-                appliedFont = -1;
+                InvalidateFont();
             }
             Row r = rows[index];
             if (!r.Go.activeSelf) r.Go.SetActive(true);
             return r;
-        }
-
-        private static bool IsTagged(VRRig rig)
-        {
-            if (rig.lavaParticleSystem != null && rig.lavaParticleSystem.isPlaying) return true;
-            if (rig.rockParticleSystem != null && rig.rockParticleSystem.isPlaying) return true;
-            return false;
-        }
-
-        protected override void OnDestroy()
-        {
-            if (instance != null) Destroy(instance);
-            instance = null;
-            base.OnDestroy();
         }
     }
 }

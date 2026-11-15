@@ -51,8 +51,8 @@ namespace GenneCaster.Game
 
         private static Sprite? LoadIconSprite(string resourceName)
         {
-            using Stream? stream = typeof(AssetManager).Assembly.GetManifestResourceStream(resourceName);
-            if (stream == null)
+            byte[]? bytes = EmbeddedResources.Read(resourceName);
+            if (bytes == null)
             {
                 Log.Error($"Missing embedded icon {resourceName}.");
                 return null;
@@ -62,18 +62,10 @@ namespace GenneCaster.Game
                 Log.Error("ImageConversion.LoadImage(Texture2D, byte[], bool) was not found; platform icons cannot load.");
                 return null;
             }
-            byte[] bytes = new byte[stream.Length];
-            int read = 0;
-            while (read < bytes.Length)
-            {
-                int n = stream.Read(bytes, read, bytes.Length - read);
-                if (n <= 0) break;
-                read += n;
-            }
             var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
             if (!(LoadImageBytes.Invoke(null, new object[] { texture, bytes, false }) is bool loaded && loaded))
             {
-                Log.Error($"Failed to decode embedded icon {resourceName} ({read} of {bytes.Length} bytes read).");
+                Log.Error($"Failed to decode embedded icon {resourceName} ({bytes.Length} bytes).");
                 Destroy(texture);
                 return null;
             }
