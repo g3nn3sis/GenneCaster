@@ -112,8 +112,9 @@ namespace GenneCaster.Replay
             Vector3 local = transform.InverseTransformPoint(hand.position);
             Vector3 reach = transform.TransformPoint(target.position + target.rotation * (Quaternion.Inverse(shown.rotation) * (local - shown.position)));
             Quaternion grip = WorldDelta(shown, target) * hand.rotation;
+            Vector3 wrist = lower.InverseTransformPoint(hand.position);
             TwoBoneIK.Solve(upper, lower, hand, reach);
-            hand.rotation = grip;
+            hand.SetPositionAndRotation(lower.TransformPoint(wrist), grip);
         }
 
         private bool TryLimbDelta(int limb, ActorFrame from, ActorFrame to, float blend, out Pose shown, out Pose target)
