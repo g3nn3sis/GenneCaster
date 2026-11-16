@@ -1,14 +1,14 @@
-// Copyright (c) 2026 GenneCaster contributors
-// SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
+// Copyright (c) 2026 Zerori contributors
+// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using GenneCaster.Base;
-using GenneCaster.Player;
-using GenneCaster.Replay;
+using Zerori.Base;
+using Zerori.Player;
+using Zerori.Replay;
 using Photon.Pun;
 using UnityEngine;
 
-namespace GenneCaster.Game
+namespace Zerori.Game
 {
     internal sealed class MiniMap : ObjectComponent
     {
@@ -37,7 +37,7 @@ namespace GenneCaster.Game
         {
             try
             {
-                var cameraObject = new GameObject("_GenneCaster MiniMap Camera");
+                var cameraObject = new GameObject("_Zerori MiniMap Camera");
                 DontDestroyOnLoad(cameraObject);
                 topViewCamera = cameraObject.AddComponent<Camera>();
                 topViewCamera.clearFlags = CameraClearFlags.Color;
@@ -64,7 +64,7 @@ namespace GenneCaster.Game
             size = Mathf.Clamp(size, MinimumTextureSize, MaximumTextureSize);
             if (renderTexture != null && renderTexture.width == size) return;
             ReleaseTexture();
-            renderTexture = new RenderTexture(size, size, 16) { name = "_GenneCaster MiniMap" };
+            renderTexture = new RenderTexture(size, size, 16) { name = "_Zerori MiniMap" };
             topViewCamera!.targetTexture = renderTexture;
         }
 

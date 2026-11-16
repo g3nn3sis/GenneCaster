@@ -1,13 +1,13 @@
-// Copyright (c) 2026 GenneCaster contributors
-// SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
+// Copyright (c) 2026 Zerori contributors
+// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using GenneCaster.Base;
+using Zerori.Base;
 using System.Reflection;
 using TMPro;
 using UnityEngine;
 
-namespace GenneCaster.Game
+namespace Zerori.Game
 {
     internal sealed class AssetManager : ObjectComponent
     {
@@ -23,8 +23,8 @@ namespace GenneCaster.Game
             base.Awake();
             try { discoveredFonts = DiscoverFonts(); }
             catch (Exception e) { Log.Exception(e, "Font discovery failed"); }
-            smallSteamSprite = LoadIconSprite("GenneCaster.Icons.steam.png");
-            smallMetaSprite = LoadIconSprite("GenneCaster.Icons.meta.png");
+            smallSteamSprite = LoadIconSprite("Zerori.Icons.steam.png");
+            smallMetaSprite = LoadIconSprite("Zerori.Icons.meta.png");
         }
 
         internal static string FontName(int index)

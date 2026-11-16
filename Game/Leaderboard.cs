@@ -1,16 +1,16 @@
-// Copyright (c) 2026 GenneCaster contributors
-// SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
+// Copyright (c) 2026 Zerori contributors
+// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using GenneCaster.Base;
-using GenneCaster.Player;
-using GenneCaster.Replay;
+using Zerori.Base;
+using Zerori.Player;
+using Zerori.Replay;
 using Photon.Pun;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace GenneCaster.Game
+namespace Zerori.Game
 {
     internal sealed class Leaderboard : HudOverlay
     {

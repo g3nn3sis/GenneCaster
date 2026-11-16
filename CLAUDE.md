@@ -1,14 +1,14 @@
-# Working in GenneCaster
+# Working in Zerori
 
 Instructions for an AI agent (or any new contributor) working in this repository. Read this
 before changing code.
 
 ## What this is
 
-GenneCaster is a **BepInEx plugin for Gorilla Tag** (a Unity VR game) that turns the game into
+Zerori is a **BepInEx plugin for Gorilla Tag** (a Unity VR game) that turns the game into
 a spectator/casting tool: free/orbit camera, nametags, minimap, leaderboard, scoreboard,
 closest-lava readout, Discord Rich Presence, and an in-game IMGUI control panel. Target
-framework is **net48**; it builds to a single `GenneCaster-<version>.dll`.
+framework is **net48**; it builds to a single `Zerori-<version>.dll`.
 
 ## The one rule that shapes everything
 
@@ -23,11 +23,11 @@ framework is **net48**; it builds to a single `GenneCaster-<version>.dll`.
 ## Build
 
 ```bash
-dotnet build GenneCaster.csproj -c Release
+dotnet build Zerori.csproj -c Release
 ```
 
-A successful plugin build **copies `GenneCaster-<version>.dll` into the game's
-`BepInEx\plugins\GenneCaster\`** folder automatically (see `Directory.Build.targets`). Paths
+A successful plugin build **copies `Zerori-<version>.dll` into the game's
+`BepInEx\plugins\Zerori\`** folder automatically (see `Directory.Build.targets`). Paths
 to the game and BepInEx are in `Directory.Build.props` (`GamePath`).
 
 ## Layout
@@ -46,7 +46,7 @@ External/        Vendored third-party source (DiscordRPC) — do not modify
 Resources/       Embedded icons + HUD asset bundle
 ```
 
-Namespaces mirror folders: `GenneCaster.<Folder>` (e.g. `GenneCaster.Game`, `GenneCaster.UI.Panels`).
+Namespaces mirror folders: `Zerori.<Folder>` (e.g. `Zerori.Game`, `Zerori.UI.Panels`).
 There is no `Classes.` segment. One top-level type per file, named after the type.
 
 ## Code standard
@@ -65,7 +65,7 @@ newline at end of file. Keep related code grouped and ordered the same way acros
 
 ## Conventions
 
-- Block-scoped namespaces mirroring folders (`GenneCaster.<Folder>`).
+- Block-scoped namespaces mirroring folders (`Zerori.<Folder>`).
 - `internal` and `sealed` by default; `public` only when required.
 - Nullable reference types are **on**; honour the annotations.
 - Log through `Log`; per-frame failures use `Log.*Once`. Never an empty `catch`.
@@ -75,7 +75,7 @@ newline at end of file. Keep related code grouped and ordered the same way acros
   layout spacing, thresholds) stay as `private const` in the class that uses them, never in
   config.
 - `PluginInfo.Version` and `<Version>` in `Directory.Build.props` must match (build enforces it).
-- `GenneCaster.csproj` references only the assemblies actually used; add a `<Reference>` when a
+- `Zerori.csproj` references only the assemblies actually used; add a `<Reference>` when a
   new one is needed (the build error names it).
 
 ## Gotchas

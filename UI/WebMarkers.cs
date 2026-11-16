@@ -1,14 +1,14 @@
-// Copyright (c) 2026 GenneCaster contributors
-// SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
+// Copyright (c) 2026 Zerori contributors
+// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using GenneCaster.Base;
-using GenneCaster.GameCamera;
-using GenneCaster.GameCamera.Modes;
-using GenneCaster.GameCamera.Webs;
+using Zerori.Base;
+using Zerori.GameCamera;
+using Zerori.GameCamera.Modes;
+using Zerori.GameCamera.Webs;
 using UnityEngine;
 
-namespace GenneCaster.UI
+namespace Zerori.UI
 {
     internal sealed class WebMarkers : ObjectComponent
     {

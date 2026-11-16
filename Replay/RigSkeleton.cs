@@ -1,5 +1,5 @@
-// Copyright (c) 2026 GenneCaster contributors
-// SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
+// Copyright (c) 2026 Zerori contributors
+// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
 using HarmonyLib;
@@ -7,7 +7,7 @@ using System.IO;
 using System.Reflection;
 using UnityEngine;
 
-namespace GenneCaster.Replay
+namespace Zerori.Replay
 {
     internal sealed class RigSkeleton
     {

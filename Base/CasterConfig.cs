@@ -1,16 +1,16 @@
-// Copyright (c) 2026 GenneCaster contributors
-// SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
+// Copyright (c) 2026 Zerori contributors
+// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
 using BepInEx.Configuration;
-using GenneCaster.Game;
-using GenneCaster.GameCamera;
+using Zerori.Game;
+using Zerori.GameCamera;
 using System.IO;
 using System.Text;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace GenneCaster.Base
+namespace Zerori.Base
 {
     internal static class CasterConfig
     {
@@ -228,7 +228,7 @@ namespace GenneCaster.Base
             KillFeedOffsetY = Range(config, "KillFeed", "Offset Y", 0f, -500f, 500f, "Move down (negative) or up (positive), in 1080p pixels.");
             KillFeedPosition = config.Bind("KillFeed", "Position", HudPosition.TopRight, "Corner the kill feed sits in: BottomLeft, BottomRight or TopRight. Only one overlay can use a corner.");
 
-            PlayerName = config.Bind("Player", "Name", "GENNECASTER", "Up to 12 letters or digits.");
+            PlayerName = config.Bind("Player", "Name", "ZERORI", "Up to 12 letters or digits.");
             PlayerRed = Range(config, "Player", "Red", 0f, 0f, 1f);
             PlayerGreen = Range(config, "Player", "Green", 0f, 0f, 1f);
             PlayerBlue = Range(config, "Player", "Blue", 0f, 0f, 1f);

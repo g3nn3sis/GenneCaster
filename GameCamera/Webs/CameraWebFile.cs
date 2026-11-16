@@ -1,13 +1,13 @@
-// Copyright (c) 2026 GenneCaster contributors
-// SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
+// Copyright (c) 2026 Zerori contributors
+// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using GenneCaster.Base;
+using Zerori.Base;
 using System.Globalization;
 using System.IO;
 using UnityEngine;
 
-namespace GenneCaster.GameCamera.Webs
+namespace Zerori.GameCamera.Webs
 {
     internal static class CameraWebFile
     {
@@ -63,7 +63,7 @@ namespace GenneCaster.GameCamera.Webs
                 string[] lines = File.ReadAllLines(path);
                 if (lines.Length == 0 || lines[0].Trim() != Header)
                 {
-                    Log.Warning($"Web '{name}' is not a GenneCaster web file.");
+                    Log.Warning($"Web '{name}' is not a Zerori web file.");
                     return nodes;
                 }
                 for (int i = 1; i < lines.Length; i++)

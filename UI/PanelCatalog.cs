@@ -1,8 +1,8 @@
-// Copyright (c) 2026 GenneCaster contributors
-// SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
+// Copyright (c) 2026 Zerori contributors
+// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-namespace GenneCaster.UI
+namespace Zerori.UI
 {
     internal static class PanelCatalog
     {
@@ -17,7 +17,7 @@ namespace GenneCaster.UI
 
         internal static string Title(PanelId id) => id switch
         {
-            PanelId.Main => "GenneCaster",
+            PanelId.Main => "Zerori",
             PanelId.Wasd => "WASD",
             PanelId.Replay => "Replay",
             PanelId.Camera => "Camera",

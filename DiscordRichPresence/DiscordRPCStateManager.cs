@@ -1,13 +1,13 @@
-// Copyright (c) 2026 GenneCaster contributors
-// SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
+// Copyright (c) 2026 Zerori contributors
+// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using GenneCaster.Base;
-using GenneCaster.UI;
+using Zerori.Base;
+using Zerori.UI;
 using Photon.Pun;
 using Photon.Realtime;
 
-namespace GenneCaster.DiscordRichPresence
+namespace Zerori.DiscordRichPresence
 {
     internal sealed class DiscordRPCStateManager : ObjectComponent
     {

@@ -1,4 +1,4 @@
-# Contributing to GenneCaster
+# Contributing to Zerori
 
 Thanks for helping. Bug reports, fixes and new caster features are all welcome.
 
@@ -25,4 +25,4 @@ Follow **Build from source** in the [README](README.md). Test every change in ga
 ## Releases
 
 1. Update `<Version>` in `Directory.Build.props` and `Version` in `Base/PluginInfo.cs`.
-2. Build with `dotnet build -c Release`. The build drops `GenneCaster-<version>.dll` into your game's `BepInEx\plugins\GenneCaster\` folder; zip that folder (alongside the licenses) as `GenneCaster-v<version>.zip` and attach it to the GitHub release.
+2. Build with `dotnet build -c Release`. The build drops `Zerori-<version>.dll` into your game's `BepInEx\plugins\Zerori\` folder; zip that folder (alongside the licenses) as `Zerori-v<version>.zip` and attach it to the GitHub release.

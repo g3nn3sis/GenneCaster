@@ -1,26 +1,36 @@
-// Copyright (c) 2026 GenneCaster contributors
-// SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
+// Copyright (c) 2026 Zerori contributors
+// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
 using BepInEx;
 using BepInEx.Configuration;
 using System.IO;
 
-namespace GenneCaster.Base
+namespace Zerori.Base
 {
     internal static class ConfigStorage
     {
+        private const string PreviousRootFolder = "GenneCaster";
         private const string LegacyPresetFolder = "GenneCaster-presets";
 
         internal static ConfigFile Open(string legacyConfigPath, BepInPlugin owner)
         {
             try
             {
+                MigratePreviousRoot();
                 Directory.CreateDirectory(DataFolders.Configs);
                 MigrateLegacy(legacyConfigPath);
             }
-            catch (Exception e) { Log.Exception(e, "Moving the old config into the GenneCaster folder failed"); }
+            catch (Exception e) { Log.Exception(e, "Moving the old config into the Zerori folder failed"); }
             return new ConfigFile(DataFolders.DefaultConfig, true, owner);
+        }
+
+        private static void MigratePreviousRoot()
+        {
+            string previous = Path.Combine(Paths.GameRootPath, PreviousRootFolder);
+            if (Directory.Exists(DataFolders.Root) || !Directory.Exists(previous)) return;
+            Directory.Move(previous, DataFolders.Root);
+            Log.Info($"Moved {previous} to {DataFolders.Root}.");
         }
 
         private static void MigrateLegacy(string legacyConfigPath)

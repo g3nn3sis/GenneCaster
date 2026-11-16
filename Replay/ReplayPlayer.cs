@@ -1,14 +1,14 @@
-// Copyright (c) 2026 GenneCaster contributors
-// SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
+// Copyright (c) 2026 Zerori contributors
+// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using GenneCaster.Base;
-using GenneCaster.Game;
-using GenneCaster.GameCamera;
-using GenneCaster.Player;
+using Zerori.Base;
+using Zerori.Game;
+using Zerori.GameCamera;
+using Zerori.Player;
 using UnityEngine;
 
-namespace GenneCaster.Replay
+namespace Zerori.Replay
 {
     internal sealed class ReplayPlayer : IDisposable
     {
