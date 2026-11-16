@@ -21,7 +21,10 @@ namespace GenneCaster.UI.Panels
         private string[] presetNames = Array.Empty<string>();
         private Action[] presetLoad = Array.Empty<Action>();
         private Action[] presetDelete = Array.Empty<Action>();
+        private Action[] presetRename = Array.Empty<Action>();
         private bool presetsDirty = true;
+        private string? renaming;
+        private string renameText = string.Empty;
 
         internal SetupPanels(PanelOrchestrator owner)
         {
@@ -94,13 +97,41 @@ namespace GenneCaster.UI.Panels
                 for (int i = 0; i < presetNames.Length; i++)
                 {
                     int index = i;
+                    if (presetNames[index] == renaming)
+                    {
+                        DrawRenameRow(panel, presetNames[index]);
+                        continue;
+                    }
                     panel.HorizontalArea(() =>
                     {
-                        panel.Button(presetNames[index], presetLoad[index]);
+                        panel.Button(presetNames[index], presetLoad[index], presetRename[index]);
                         panel.Button("x", presetDelete[index]);
                     });
                 }
             });
+        }
+
+        private void DrawRenameRow(Panel panel, string name)
+        {
+            panel.HorizontalArea(() =>
+            {
+                renameText = panel.TextField(renameText, PresetNameLength, Presets.Sanitize);
+                panel.Button("Save", () => CommitRename(name), renameText.Trim().Length > 0 && !Presets.IsReserved(renameText.Trim()));
+                panel.Button("x", () => renaming = null);
+            });
+        }
+
+        private void BeginRename(string name)
+        {
+            renaming = name;
+            renameText = name;
+        }
+
+        private void CommitRename(string name)
+        {
+            if (!Presets.Rename(name, renameText.Trim())) return;
+            renaming = null;
+            presetsDirty = true;
         }
 
         private void SaveCurrentPreset()
@@ -114,11 +145,13 @@ namespace GenneCaster.UI.Panels
             presetNames = Presets.Names();
             presetLoad = new Action[presetNames.Length];
             presetDelete = new Action[presetNames.Length];
+            presetRename = new Action[presetNames.Length];
             for (int i = 0; i < presetNames.Length; i++)
             {
                 string name = presetNames[i];
                 presetLoad[i] = () => { if (Presets.Load(name)) owner.ReapplyFromConfig(); };
                 presetDelete[i] = () => { Presets.Delete(name); presetsDirty = true; };
+                presetRename[i] = () => BeginRename(name);
             }
         }
     }

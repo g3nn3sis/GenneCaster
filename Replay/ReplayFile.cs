@@ -59,6 +59,27 @@ namespace GenneCaster.Replay
             return Read(reader);
         }
 
+        internal static bool Rename(string name, string newName)
+        {
+            if (newName.Length == 0) return false;
+            if (newName == name) return true;
+            string source = PathOf(name);
+            string target = PathOf(newName);
+            try
+            {
+                if (!File.Exists(source)) return false;
+                if (!string.Equals(newName, name, StringComparison.OrdinalIgnoreCase) && File.Exists(target)) return false;
+                File.Move(source, target);
+                Log.Info($"Renamed replay '{name}' to '{newName}'.");
+                return true;
+            }
+            catch (Exception e)
+            {
+                Log.Exception(e, $"Renaming replay '{name}' failed");
+                return false;
+            }
+        }
+
         internal static void Delete(string name)
         {
             try

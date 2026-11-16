@@ -73,6 +73,14 @@ namespace GenneCaster.Replay
             listDirty = true;
         }
 
+        internal static bool Rename(string name, string newName)
+        {
+            if (name == loadingName || name == savingName) return false;
+            if (!ReplayFile.Rename(name, newName)) return false;
+            listDirty = true;
+            return true;
+        }
+
         internal static void ExitReplay()
         {
             if (player == null) return;

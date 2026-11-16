@@ -76,6 +76,29 @@ namespace GenneCaster.Base
             }
         }
 
+        internal static bool Rename(string name, string rawNewName)
+        {
+            string newName = Sanitize(rawNewName);
+            string? dir = Directory;
+            if (dir == null || newName.Length == 0 || IsReserved(name) || IsReserved(newName)) return false;
+            if (newName == name) return true;
+            string source = Path.Combine(dir, name + Extension);
+            string target = Path.Combine(dir, newName + Extension);
+            try
+            {
+                if (!File.Exists(source)) return false;
+                if (!string.Equals(newName, name, StringComparison.OrdinalIgnoreCase) && File.Exists(target)) return false;
+                File.Move(source, target);
+                Log.Info($"Renamed preset '{name}' to '{newName}'.");
+                return true;
+            }
+            catch (Exception e)
+            {
+                Log.Exception(e, $"Renaming preset '{name}' failed");
+                return false;
+            }
+        }
+
         internal static void Delete(string name)
         {
             string? dir = Directory;

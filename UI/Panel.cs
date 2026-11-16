@@ -230,14 +230,22 @@ namespace GenneCaster.UI
             return new Rect(row.x + 1f, row.y + RowGap * 0.5f, Mathf.Max(1f, row.width - 2f), height);
         }
 
-        internal void Button(string text, Action? onClick, bool interactable = true) => DrawButton(text, onClick, interactable, buttonStyle!);
+        internal void Button(string text, Action? onClick, bool interactable = true) => DrawButton(text, onClick, null, interactable, buttonStyle!);
 
-        private void DrawButton(string text, Action? onClick, bool interactable, GUIStyle style)
+        internal void Button(string text, Action? onClick, Action onRightClick, bool interactable = true) => DrawButton(text, onClick, onRightClick, interactable, buttonStyle!);
+
+        private void DrawButton(string text, Action? onClick, Action? onRightClick, bool interactable, GUIStyle style)
         {
             Rect area = NextRect(ButtonHeight);
             style.fontSize = FittingFontSize(text, area.width - 6f, style);
             bool wasEnabled = GUI.enabled;
             GUI.enabled = wasEnabled && interactable;
+            Event current = Event.current;
+            if (GUI.enabled && onRightClick != null && current.type == EventType.MouseDown && current.button == 1 && area.Contains(current.mousePosition))
+            {
+                current.Use();
+                onRightClick();
+            }
             if (GUI.Button(area, text, style)) onClick?.Invoke();
             GUI.enabled = wasEnabled;
         }

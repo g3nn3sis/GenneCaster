@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
+using GenneCaster.Base;
 using GenneCaster.GameCamera;
 using GenneCaster.Replay;
 using UnityEngine;
@@ -10,8 +11,12 @@ namespace GenneCaster.UI.Panels
 {
     internal sealed class ReplayPanel
     {
+        private const int RenameLength = 32;
+
         private Vector2 puppetScroll;
         private Vector2 savedScroll;
+        private string? renaming;
+        private string renameText = string.Empty;
 
         internal void Draw(Panel panel)
         {
@@ -44,13 +49,40 @@ namespace GenneCaster.UI.Panels
             {
                 foreach (string name in names)
                 {
-                    panel.HorizontalArea(() =>
-                    {
-                        panel.Button(name, () => ReplaySession.Play(name), !ReplaySession.IsLoading);
-                        panel.Button("x", () => ReplaySession.Delete(name));
-                    });
+                    if (name == renaming) DrawRenameRow(panel, name);
+                    else DrawReplayRow(panel, name);
                 }
             });
+        }
+
+        private void DrawReplayRow(Panel panel, string name)
+        {
+            panel.HorizontalArea(() =>
+            {
+                panel.Button(name, () => ReplaySession.Play(name), () => BeginRename(name), !ReplaySession.IsLoading);
+                panel.Button("x", () => ReplaySession.Delete(name));
+            });
+        }
+
+        private void DrawRenameRow(Panel panel, string name)
+        {
+            panel.HorizontalArea(() =>
+            {
+                renameText = panel.TextField(renameText, RenameLength, Presets.Sanitize);
+                panel.Button("Save", () => CommitRename(name), renameText.Trim().Length > 0);
+                panel.Button("x", () => renaming = null);
+            });
+        }
+
+        private void BeginRename(string name)
+        {
+            renaming = name;
+            renameText = name;
+        }
+
+        private void CommitRename(string name)
+        {
+            if (ReplaySession.Rename(name, renameText.Trim())) renaming = null;
         }
 
         private void DrawPlayback(Panel panel, ReplayPlayer replay)
