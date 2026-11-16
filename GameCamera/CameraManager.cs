@@ -1,14 +1,14 @@
-// Copyright (c) 2026 Zerori contributors
-// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
+// Copyright (c) 2026 Zetori contributors
+// SPDX-License-Identifier: LicenseRef-Zetori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using Zerori.Base;
-using Zerori.GameCamera.Modes;
-using Zerori.Player;
-using Zerori.Replay;
+using Zetori.Base;
+using Zetori.GameCamera.Modes;
+using Zetori.Player;
+using Zetori.Replay;
 using UnityEngine;
 
-namespace Zerori.GameCamera
+namespace Zetori.GameCamera
 {
     internal sealed class CameraManager : ObjectComponent
     {

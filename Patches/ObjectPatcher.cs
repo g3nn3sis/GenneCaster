@@ -1,14 +1,14 @@
-// Copyright (c) 2026 Zerori contributors
-// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
+// Copyright (c) 2026 Zetori contributors
+// SPDX-License-Identifier: LicenseRef-Zetori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using Zerori.Base;
+using Zetori.Base;
 using GorillaLocomotion;
 using HarmonyLib;
 using System.Reflection;
 using UnityEngine;
 
-namespace Zerori.Patches
+namespace Zetori.Patches
 {
     [HarmonyPatch(typeof(GTPlayer), "LateUpdate")]
     internal static class ObjectPatcher
@@ -32,7 +32,7 @@ namespace Zerori.Patches
             catch (Exception e)
             {
                 failed = true;
-                Log.Exception(e, "Creating the Zerori components failed");
+                Log.Exception(e, "Creating the Zetori components failed");
             }
         }
     }

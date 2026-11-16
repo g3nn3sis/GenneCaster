@@ -1,14 +1,14 @@
-// Copyright (c) 2026 Zerori contributors
-// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
+// Copyright (c) 2026 Zetori contributors
+// SPDX-License-Identifier: LicenseRef-Zetori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
 using BepInEx.Configuration;
-using Zerori.Base;
-using Zerori.Replay;
-using Zerori.UI.Panels;
+using Zetori.Base;
+using Zetori.Replay;
+using Zetori.UI.Panels;
 using UnityEngine;
 
-namespace Zerori.UI
+namespace Zetori.UI
 {
     internal sealed class PanelOrchestrator : IDisposable
     {

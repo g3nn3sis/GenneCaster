@@ -1,12 +1,12 @@
-// Copyright (c) 2026 Zerori contributors
-// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
+// Copyright (c) 2026 Zetori contributors
+// SPDX-License-Identifier: LicenseRef-Zetori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using Zerori.Base;
-using Zerori.Game;
+using Zetori.Base;
+using Zetori.Game;
 using UnityEngine;
 
-namespace Zerori.UI.Panels
+namespace Zetori.UI.Panels
 {
     internal sealed class WorldPanels
     {

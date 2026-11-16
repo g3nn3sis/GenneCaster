@@ -1,13 +1,13 @@
-// Copyright (c) 2026 Zerori contributors
-// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
+// Copyright (c) 2026 Zetori contributors
+// SPDX-License-Identifier: LicenseRef-Zetori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using Zerori.Base;
-using Zerori.UI;
+using Zetori.Base;
+using Zetori.UI;
 using Photon.Pun;
 using Photon.Realtime;
 
-namespace Zerori.DiscordRichPresence
+namespace Zetori.DiscordRichPresence
 {
     internal sealed class DiscordRPCStateManager : ObjectComponent
     {

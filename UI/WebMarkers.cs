@@ -1,14 +1,14 @@
-// Copyright (c) 2026 Zerori contributors
-// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
+// Copyright (c) 2026 Zetori contributors
+// SPDX-License-Identifier: LicenseRef-Zetori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using Zerori.Base;
-using Zerori.GameCamera;
-using Zerori.GameCamera.Modes;
-using Zerori.GameCamera.Webs;
+using Zetori.Base;
+using Zetori.GameCamera;
+using Zetori.GameCamera.Modes;
+using Zetori.GameCamera.Webs;
 using UnityEngine;
 
-namespace Zerori.UI
+namespace Zetori.UI
 {
     internal sealed class WebMarkers : ObjectComponent
     {

@@ -1,15 +1,15 @@
-// Copyright (c) 2026 Zerori contributors
-// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
+// Copyright (c) 2026 Zetori contributors
+// SPDX-License-Identifier: LicenseRef-Zetori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using Zerori.Base;
-using Zerori.Player;
+using Zetori.Base;
+using Zetori.Player;
 using HarmonyLib;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.Audio;
 
-namespace Zerori.Replay
+namespace Zetori.Replay
 {
     internal sealed class RigAppearance : IDisposable
     {

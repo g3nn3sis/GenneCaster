@@ -5,11 +5,11 @@
 		<LangVersion>latest</LangVersion>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<AssemblyName>Zerori</AssemblyName>
+		<AssemblyName>Zetori</AssemblyName>
 		<TargetName>$(AssemblyName)-$(Version)</TargetName>
-		<RootNamespace>Zerori</RootNamespace>
-		<Product>Zerori</Product>
-		<Copyright>Copyright (c) 2026 Zerori contributors</Copyright>
+		<RootNamespace>Zetori</RootNamespace>
+		<Product>Zetori</Product>
+		<Copyright>Copyright (c) 2026 Zetori contributors</Copyright>
 	</PropertyGroup>
 
 	<!-- Nothing uses System.Net.Http, so drop the implicit using instead of pulling in a package for it. -->
@@ -77,14 +77,14 @@
 
 	<!-- Nametag platform icons, embedded in the DLL and loaded locally by AssetManager. -->
 	<ItemGroup>
-		<EmbeddedResource Include="Resources\Icons\meta.png" LogicalName="Zerori.Icons.meta.png" />
-		<EmbeddedResource Include="Resources\Icons\steam.png" LogicalName="Zerori.Icons.steam.png" />
+		<EmbeddedResource Include="Resources\Icons\meta.png" LogicalName="Zetori.Icons.meta.png" />
+		<EmbeddedResource Include="Resources\Icons\steam.png" LogicalName="Zetori.Icons.steam.png" />
 	</ItemGroup>
 
 	<!-- HUD asset bundle (leaderboard + closest-lava canvases), authored in Unity 6000.2.9f1 to match
 	     Gorilla Tag and embedded in the DLL so it loads offline through HudAssets. -->
 	<ItemGroup>
-		<EmbeddedResource Include="Resources\Bundles\zerori.bundle" LogicalName="Zerori.Bundles.zerori.bundle" />
+		<EmbeddedResource Include="Resources\Bundles\zetori.bundle" LogicalName="Zetori.Bundles.zetori.bundle" />
 	</ItemGroup>
 
 </Project>

@@ -1,16 +1,16 @@
-// Copyright (c) 2026 Zerori contributors
-// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
+// Copyright (c) 2026 Zetori contributors
+// SPDX-License-Identifier: LicenseRef-Zetori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using Zerori.Base;
+using Zetori.Base;
 using TMPro;
 using UnityEngine;
 
-namespace Zerori.Game
+namespace Zetori.Game
 {
     internal static class HudAssets
     {
-        private const string BundleResource = "Zerori.Bundles.zerori.bundle";
+        private const string BundleResource = "Zetori.Bundles.zetori.bundle";
 
         private static AssetBundle? bundle;
         private static bool attempted;
@@ -42,7 +42,7 @@ namespace Zerori.Game
                 bundle = AssetBundle.LoadFromMemory(bytes);
                 if (bundle == null)
                 {
-                    Log.Error("Failed to load the Zerori HUD asset bundle from memory.");
+                    Log.Error("Failed to load the Zetori HUD asset bundle from memory.");
                     return;
                 }
                 LeaderboardPrefab = bundle.LoadAsset<GameObject>("GenneCasterLeaderboard");
@@ -51,7 +51,7 @@ namespace Zerori.Game
                 if (LeaderboardPrefab == null || ClosestLavaPrefab == null || ScoreboardPrefab == null)
                     Log.Error("The HUD asset bundle is missing one or more canvas prefabs.");
                 else
-                    Log.Info("Loaded the Zerori HUD asset bundle.");
+                    Log.Info("Loaded the Zetori HUD asset bundle.");
             }
             catch (Exception e) { Log.Exception(e, "Loading the HUD asset bundle failed"); }
         }

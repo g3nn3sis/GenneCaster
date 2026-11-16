@@ -1,12 +1,12 @@
-// Copyright (c) 2026 Zerori contributors
-// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
+// Copyright (c) 2026 Zetori contributors
+// SPDX-License-Identifier: LicenseRef-Zetori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using Zerori.Base;
+using Zetori.Base;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace Zerori.UI
+namespace Zetori.UI
 {
     internal sealed class Panel : IDisposable
     {

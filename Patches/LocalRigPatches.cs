@@ -1,10 +1,10 @@
-// Copyright (c) 2026 Zerori contributors
-// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
+// Copyright (c) 2026 Zetori contributors
+// SPDX-License-Identifier: LicenseRef-Zetori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
 using HarmonyLib;
 
-namespace Zerori.Patches
+namespace Zetori.Patches
 {
     [HarmonyPatch(typeof(VRRig), "OnDisable")]
     internal static class LocalRigDisablePatch

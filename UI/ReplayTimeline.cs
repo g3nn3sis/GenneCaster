@@ -1,12 +1,12 @@
-// Copyright (c) 2026 Zerori contributors
-// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
+// Copyright (c) 2026 Zetori contributors
+// SPDX-License-Identifier: LicenseRef-Zetori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using Zerori.GameCamera;
-using Zerori.Replay;
+using Zetori.GameCamera;
+using Zetori.Replay;
 using UnityEngine;
 
-namespace Zerori.UI
+namespace Zetori.UI
 {
     internal sealed class ReplayTimeline : IDisposable
     {
@@ -40,7 +40,7 @@ namespace Zerori.UI
         private static readonly Color LeaveColor = new Color(0.6f, 0.6f, 0.6f, 1f);
         private static readonly Color EnvironmentColor = new Color(0.55f, 0.7f, 1f, 1f);
 
-        private readonly int scrubHint = "ZeroriReplayScrub".GetHashCode();
+        private readonly int scrubHint = "ZetoriReplayScrub".GetHashCode();
         private Texture2D? background, button;
         private GUIStyle? backgroundStyle, buttonStyle, clockStyle, tooltipStyle;
         private Color32 builtAccent;

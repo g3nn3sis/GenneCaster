@@ -1,14 +1,14 @@
-// Copyright (c) 2026 Zerori contributors
-// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
+// Copyright (c) 2026 Zetori contributors
+// SPDX-License-Identifier: LicenseRef-Zetori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using Zerori.Base;
-using Zerori.Player;
-using Zerori.Replay;
+using Zetori.Base;
+using Zetori.Player;
+using Zetori.Replay;
 using Photon.Pun;
 using UnityEngine;
 
-namespace Zerori.Game
+namespace Zetori.Game
 {
     internal sealed class MiniMap : ObjectComponent
     {
@@ -37,7 +37,7 @@ namespace Zerori.Game
         {
             try
             {
-                var cameraObject = new GameObject("_Zerori MiniMap Camera");
+                var cameraObject = new GameObject("_Zetori MiniMap Camera");
                 DontDestroyOnLoad(cameraObject);
                 topViewCamera = cameraObject.AddComponent<Camera>();
                 topViewCamera.clearFlags = CameraClearFlags.Color;
@@ -64,7 +64,7 @@ namespace Zerori.Game
             size = Mathf.Clamp(size, MinimumTextureSize, MaximumTextureSize);
             if (renderTexture != null && renderTexture.width == size) return;
             ReleaseTexture();
-            renderTexture = new RenderTexture(size, size, 16) { name = "_Zerori MiniMap" };
+            renderTexture = new RenderTexture(size, size, 16) { name = "_Zetori MiniMap" };
             topViewCamera!.targetTexture = renderTexture;
         }
 

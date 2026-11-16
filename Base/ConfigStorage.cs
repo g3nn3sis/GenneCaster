@@ -1,12 +1,12 @@
-// Copyright (c) 2026 Zerori contributors
-// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
+// Copyright (c) 2026 Zetori contributors
+// SPDX-License-Identifier: LicenseRef-Zetori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
 using BepInEx;
 using BepInEx.Configuration;
 using System.IO;
 
-namespace Zerori.Base
+namespace Zetori.Base
 {
     internal static class ConfigStorage
     {
@@ -21,7 +21,7 @@ namespace Zerori.Base
                 Directory.CreateDirectory(DataFolders.Configs);
                 MigrateLegacy(legacyConfigPath);
             }
-            catch (Exception e) { Log.Exception(e, "Moving the old config into the Zerori folder failed"); }
+            catch (Exception e) { Log.Exception(e, "Moving the old config into the Zetori folder failed"); }
             return new ConfigFile(DataFolders.DefaultConfig, true, owner);
         }
 

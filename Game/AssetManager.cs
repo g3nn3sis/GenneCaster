@@ -1,13 +1,13 @@
-// Copyright (c) 2026 Zerori contributors
-// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
+// Copyright (c) 2026 Zetori contributors
+// SPDX-License-Identifier: LicenseRef-Zetori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using Zerori.Base;
+using Zetori.Base;
 using System.Reflection;
 using TMPro;
 using UnityEngine;
 
-namespace Zerori.Game
+namespace Zetori.Game
 {
     internal sealed class AssetManager : ObjectComponent
     {
@@ -23,8 +23,8 @@ namespace Zerori.Game
             base.Awake();
             try { discoveredFonts = DiscoverFonts(); }
             catch (Exception e) { Log.Exception(e, "Font discovery failed"); }
-            smallSteamSprite = LoadIconSprite("Zerori.Icons.steam.png");
-            smallMetaSprite = LoadIconSprite("Zerori.Icons.meta.png");
+            smallSteamSprite = LoadIconSprite("Zetori.Icons.steam.png");
+            smallMetaSprite = LoadIconSprite("Zetori.Icons.meta.png");
         }
 
         internal static string FontName(int index)

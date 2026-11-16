@@ -1,13 +1,13 @@
-// Copyright (c) 2026 Zerori contributors
-// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
+// Copyright (c) 2026 Zetori contributors
+// SPDX-License-Identifier: LicenseRef-Zetori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using Zerori.Base;
+using Zetori.Base;
 using System.Globalization;
 using System.IO;
 using UnityEngine;
 
-namespace Zerori.GameCamera.Webs
+namespace Zetori.GameCamera.Webs
 {
     internal static class CameraWebFile
     {
@@ -63,7 +63,7 @@ namespace Zerori.GameCamera.Webs
                 string[] lines = File.ReadAllLines(path);
                 if (lines.Length == 0 || lines[0].Trim() != Header)
                 {
-                    Log.Warning($"Web '{name}' is not a Zerori web file.");
+                    Log.Warning($"Web '{name}' is not a Zetori web file.");
                     return nodes;
                 }
                 for (int i = 1; i < lines.Length; i++)

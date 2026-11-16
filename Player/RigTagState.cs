@@ -1,10 +1,10 @@
-// Copyright (c) 2026 Zerori contributors
-// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
+// Copyright (c) 2026 Zetori contributors
+// SPDX-License-Identifier: LicenseRef-Zetori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using Zerori.Replay;
+using Zetori.Replay;
 
-namespace Zerori.Player
+namespace Zetori.Player
 {
     internal static class RigTagState
     {

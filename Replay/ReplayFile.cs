@@ -1,15 +1,15 @@
-// Copyright (c) 2026 Zerori contributors
-// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
+// Copyright (c) 2026 Zetori contributors
+// SPDX-License-Identifier: LicenseRef-Zetori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using Zerori.Base;
+using Zetori.Base;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
 using UnityEngine;
 
-namespace Zerori.Replay
+namespace Zetori.Replay
 {
     internal static class ReplayFile
     {
@@ -134,9 +134,9 @@ namespace Zerori.Replay
 
         private static ReplayRecording Read(BinaryReader reader)
         {
-            if (reader.ReadUInt32() != Magic) throw new InvalidDataException("Not a Zerori replay.");
+            if (reader.ReadUInt32() != Magic) throw new InvalidDataException("Not a Zetori replay.");
             int version = reader.ReadInt32();
-            if (version != FormatVersion) throw new InvalidDataException($"Replay format {version} is from another Zerori version and cannot be played; record it again.");
+            if (version != FormatVersion) throw new InvalidDataException($"Replay format {version} is from another Zetori version and cannot be played; record it again.");
             var recording = new ReplayRecording { Duration = reader.ReadSingle() };
             int environments = ReplayIO.ReadCount(reader);
             for (int i = 0; i < environments; i++)

@@ -1,10 +1,10 @@
-# Contributing to Zerori
+# Contributing to Zetori
 
 Thanks for helping. Bug reports, fixes and new caster features are all welcome.
 
 ## Before you start
 
-- Check the [open issues](https://github.com/g3nn3sis/GenneCaster/issues) so work is not duplicated. For a larger feature, open an issue first to agree on the approach.
+- Check the [open issues](https://github.com/g3nn3sis/Zetori/issues) so work is not duplicated. For a larger feature, open an issue first to agree on the approach.
 - Panels only configure features. A feature that draws on screen (an overlay, a scoreboard, a HUD) belongs in its own class, not inside a panel.
 - On-screen UI is laid out at 1080p in `UiScale` units and must look right from 720p to 4K.
 
@@ -25,4 +25,4 @@ Follow **Build from source** in the [README](README.md). Test every change in ga
 ## Releases
 
 1. Update `<Version>` in `Directory.Build.props` and `Version` in `Base/PluginInfo.cs`.
-2. Build with `dotnet build -c Release`. The build drops `Zerori-<version>.dll` into your game's `BepInEx\plugins\Zerori\` folder; zip that folder (alongside the licenses) as `Zerori-v<version>.zip` and attach it to the GitHub release.
+2. Build with `dotnet build -c Release`. The build drops `Zetori-<version>.dll` into your game's `BepInEx\plugins\Zetori\` folder; zip that folder (alongside the licenses) as `Zetori-v<version>.zip` and attach it to the GitHub release.

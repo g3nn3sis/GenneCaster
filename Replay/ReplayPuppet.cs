@@ -1,11 +1,11 @@
-// Copyright (c) 2026 Zerori contributors
-// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
+// Copyright (c) 2026 Zetori contributors
+// SPDX-License-Identifier: LicenseRef-Zetori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using Zerori.GameCamera;
+using Zetori.GameCamera;
 using UnityEngine;
 
-namespace Zerori.Replay
+namespace Zetori.Replay
 {
     internal sealed class ReplayPuppet : IDisposable
     {
@@ -39,7 +39,7 @@ namespace Zerori.Replay
             Actor = actor;
             this.appearance = appearance;
             RigSkeleton skeleton = actor.Skeleton;
-            root = new GameObject($"_Zerori Replay {actor.Name}");
+            root = new GameObject($"_Zetori Replay {actor.Name}");
             UnityEngine.Object.DontDestroyOnLoad(root);
             joints = BuildJoints(skeleton, root.transform);
             bodyMaterials = (Material[])appearance.BodyMaterials.Clone();

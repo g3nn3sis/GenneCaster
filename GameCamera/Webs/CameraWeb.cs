@@ -1,11 +1,11 @@
-// Copyright (c) 2026 Zerori contributors
-// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
+// Copyright (c) 2026 Zetori contributors
+// SPDX-License-Identifier: LicenseRef-Zetori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using Zerori.Base;
+using Zetori.Base;
 using UnityEngine;
 
-namespace Zerori.GameCamera.Webs
+namespace Zetori.GameCamera.Webs
 {
     internal static class CameraWeb
     {

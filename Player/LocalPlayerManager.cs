@@ -1,13 +1,13 @@
-// Copyright (c) 2026 Zerori contributors
-// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
+// Copyright (c) 2026 Zetori contributors
+// SPDX-License-Identifier: LicenseRef-Zetori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using Zerori.Base;
+using Zetori.Base;
 using GorillaNetworking;
 using Photon.Pun;
 using UnityEngine;
 
-namespace Zerori.Player
+namespace Zetori.Player
 {
     internal sealed class LocalPlayerManager : ObjectComponent
     {
