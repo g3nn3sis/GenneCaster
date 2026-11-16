@@ -1,8 +1,8 @@
-// Copyright (c) 2026 GenneCaster contributors
-// SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
+// Copyright (c) 2026 Zerori contributors
+// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-namespace GenneCaster.GameCamera.Modes
+namespace Zerori.GameCamera.Modes
 {
     internal static class DefaultCamera
     {

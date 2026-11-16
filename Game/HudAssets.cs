@@ -1,16 +1,16 @@
-// Copyright (c) 2026 GenneCaster contributors
-// SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
+// Copyright (c) 2026 Zerori contributors
+// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using GenneCaster.Base;
+using Zerori.Base;
 using TMPro;
 using UnityEngine;
 
-namespace GenneCaster.Game
+namespace Zerori.Game
 {
     internal static class HudAssets
     {
-        private const string BundleResource = "GenneCaster.Bundles.gennecaster.bundle";
+        private const string BundleResource = "Zerori.Bundles.zerori.bundle";
 
         private static AssetBundle? bundle;
         private static bool attempted;
@@ -42,7 +42,7 @@ namespace GenneCaster.Game
                 bundle = AssetBundle.LoadFromMemory(bytes);
                 if (bundle == null)
                 {
-                    Log.Error("Failed to load the GenneCaster HUD asset bundle from memory.");
+                    Log.Error("Failed to load the Zerori HUD asset bundle from memory.");
                     return;
                 }
                 LeaderboardPrefab = bundle.LoadAsset<GameObject>("GenneCasterLeaderboard");
@@ -51,7 +51,7 @@ namespace GenneCaster.Game
                 if (LeaderboardPrefab == null || ClosestLavaPrefab == null || ScoreboardPrefab == null)
                     Log.Error("The HUD asset bundle is missing one or more canvas prefabs.");
                 else
-                    Log.Info("Loaded the GenneCaster HUD asset bundle.");
+                    Log.Info("Loaded the Zerori HUD asset bundle.");
             }
             catch (Exception e) { Log.Exception(e, "Loading the HUD asset bundle failed"); }
         }

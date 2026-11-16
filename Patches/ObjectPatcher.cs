@@ -1,14 +1,14 @@
-// Copyright (c) 2026 GenneCaster contributors
-// SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
+// Copyright (c) 2026 Zerori contributors
+// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using GenneCaster.Base;
+using Zerori.Base;
 using GorillaLocomotion;
 using HarmonyLib;
 using System.Reflection;
 using UnityEngine;
 
-namespace GenneCaster.Patches
+namespace Zerori.Patches
 {
     [HarmonyPatch(typeof(GTPlayer), "LateUpdate")]
     internal static class ObjectPatcher
@@ -32,7 +32,7 @@ namespace GenneCaster.Patches
             catch (Exception e)
             {
                 failed = true;
-                Log.Exception(e, "Creating the GenneCaster components failed");
+                Log.Exception(e, "Creating the Zerori components failed");
             }
         }
     }

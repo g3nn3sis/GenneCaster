@@ -1,12 +1,12 @@
-// Copyright (c) 2026 GenneCaster contributors
-// SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
+// Copyright (c) 2026 Zerori contributors
+// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using GenneCaster.GameCamera;
-using GenneCaster.Replay;
+using Zerori.GameCamera;
+using Zerori.Replay;
 using UnityEngine;
 
-namespace GenneCaster.UI
+namespace Zerori.UI
 {
     internal sealed class ReplayTimeline : IDisposable
     {
@@ -40,7 +40,7 @@ namespace GenneCaster.UI
         private static readonly Color LeaveColor = new Color(0.6f, 0.6f, 0.6f, 1f);
         private static readonly Color EnvironmentColor = new Color(0.55f, 0.7f, 1f, 1f);
 
-        private readonly int scrubHint = "GenneCasterReplayScrub".GetHashCode();
+        private readonly int scrubHint = "ZeroriReplayScrub".GetHashCode();
         private Texture2D? background, button;
         private GUIStyle? backgroundStyle, buttonStyle, clockStyle, tooltipStyle;
         private Color32 builtAccent;

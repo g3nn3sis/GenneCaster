@@ -1,11 +1,11 @@
-// Copyright (c) 2026 GenneCaster contributors
-// SPDX-License-Identifier: LicenseRef-GenneCaster-Source-Available
+// Copyright (c) 2026 Zerori contributors
+// SPDX-License-Identifier: LicenseRef-Zerori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
-using GenneCaster.GameCamera;
+using Zerori.GameCamera;
 using UnityEngine;
 
-namespace GenneCaster.Replay
+namespace Zerori.Replay
 {
     internal sealed class ReplayPuppet : IDisposable
     {
@@ -39,7 +39,7 @@ namespace GenneCaster.Replay
             Actor = actor;
             this.appearance = appearance;
             RigSkeleton skeleton = actor.Skeleton;
-            root = new GameObject($"_GenneCaster Replay {actor.Name}");
+            root = new GameObject($"_Zerori Replay {actor.Name}");
             UnityEngine.Object.DontDestroyOnLoad(root);
             joints = BuildJoints(skeleton, root.transform);
             bodyMaterials = (Material[])appearance.BodyMaterials.Clone();

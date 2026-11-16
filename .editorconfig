@@ -14,7 +14,7 @@ indent_style = tab
 [*.{md,yml,yaml,json}]
 indent_size = 2
 
-# GenneCaster C# house style (see CONTRIBUTING.md): four-space indents, Allman braces,
+# Zerori C# house style (see CONTRIBUTING.md): four-space indents, Allman braces,
 # file-scoped usings outside the namespace. Kept at suggestion level so `dotnet format`
 # can apply them without turning the normal build's zero-warning promise into errors.
 [*.cs]
