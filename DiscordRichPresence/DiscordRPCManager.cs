@@ -8,7 +8,7 @@ namespace Zetori.DiscordRichPresence
 {
     internal sealed class DiscordRPCManager : ObjectComponent
     {
-        private const string ApplicationId = "1361832683411607725";
+        private const string ApplicationId = "1572324027886862366";
 
         internal static DiscordRPCWrapper? Client;
 
