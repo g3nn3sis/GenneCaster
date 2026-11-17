@@ -8,6 +8,7 @@ using Zetori.Replay;
 using GorillaLocomotion;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.XR;
 
 namespace Zetori.Player
 {
@@ -31,16 +32,21 @@ namespace Zetori.Player
         {
             GTPlayer? player = GTPlayer.Instance;
             if (player == null || player.playerRigidBody == null) return;
-            Rigidbody body = player.playerRigidBody;
-            body.AddForce(-Physics.gravity * body.mass * (player.scale * GravityCompensation), ForceMode.Force);
-            body.linearVelocity = Vector3.zero;
-            body.angularVelocity = Vector3.zero;
+            if (!XRSettings.isDeviceActive) Float(player);
             Mouse? mouse = Mouse.current;
             if (mouseClick && !flying && mouse != null && GorillaTagger.Instance != null)
             {
                 try { Click(GorillaTagger.Instance, mouse); }
                 catch (Exception e) { Log.ExceptionOnce("mouse-click", e, "Mouse click failed"); }
             }
+        }
+
+        private static void Float(GTPlayer player)
+        {
+            Rigidbody body = player.playerRigidBody;
+            body.AddForce(-Physics.gravity * body.mass * (player.scale * GravityCompensation), ForceMode.Force);
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
         }
 
         internal void Update()

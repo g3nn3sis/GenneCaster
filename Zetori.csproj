@@ -70,6 +70,7 @@
 		<Reference Include="UnityEngine.ImageConversionModule" HintPath="$(GameAssemblyPath)\UnityEngine.ImageConversionModule.dll" />
 		<Reference Include="UnityEngine.UI" HintPath="$(GameAssemblyPath)\UnityEngine.UI.dll" />
 		<Reference Include="UnityEngine.UIModule" HintPath="$(GameAssemblyPath)\UnityEngine.UIModule.dll" />
+		<Reference Include="UnityEngine.VRModule" HintPath="$(GameAssemblyPath)\UnityEngine.VRModule.dll" />
 		<Reference Include="UnityEngine.TextCoreFontEngineModule" HintPath="$(GameAssemblyPath)\UnityEngine.TextCoreFontEngineModule.dll" />
 		<Reference Include="UnityEngine.TextCoreTextEngineModule" HintPath="$(GameAssemblyPath)\UnityEngine.TextCoreTextEngineModule.dll" />
 		<Reference Include="UnityEngine.TextRenderingModule" HintPath="$(GameAssemblyPath)\UnityEngine.TextRenderingModule.dll" />
