@@ -42,7 +42,7 @@ Every panel is a thin title bar with an arrow. Click the bar or its arrow to sli
 
 ## VR camera
 
-When a headset is active, the panels start closed (`Esc` still opens them) and Zetori gives you a camera tablet you can hold in the game. Only you can see it, and it is left out of its own footage. The desktop window shows what the camera sees.
+When a headset is active, the panels start closed (`Esc` still opens them) and Zetori gives you a camera tablet you can hold in the game. Other players cannot see it. The desktop window shows what the camera sees, including the tablet when it is in view.
 
 | VR input | Action |
 | --- | --- |

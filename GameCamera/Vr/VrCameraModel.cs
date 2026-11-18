@@ -52,8 +52,7 @@ namespace Zetori.GameCamera.Vr
         private readonly Camera previewCamera;
         private readonly RenderTexture previewTexture;
         private Texture2D? bodyTexture;
-        private Renderer[] renderers = Array.Empty<Renderer>();
-        private Camera? outputCamera;
+        private Renderer screenRenderer = null!;
         private Material idleButton = null!;
         private Material activeButton = null!;
         private Renderer flipIcon = null!;
@@ -61,7 +60,7 @@ namespace Zetori.GameCamera.Vr
         private Material flipUnavailable = null!;
         private VrCameraMode? shownMode;
         private bool lensFlipped;
-        private bool renderersHidden;
+        private bool screenHidden;
         private bool blending;
         private float shownFade = 1f;
         private float opaqueSourceBlend;
@@ -183,9 +182,8 @@ namespace Zetori.GameCamera.Vr
             Lens.localRotation = facesScreenSide ? ScreenLensRotation : Quaternion.identity;
         }
 
-        internal void UpdatePreview(Camera output, Vector3 position, Quaternion rotation, float fieldOfView, float viewerDistance, float scale)
+        internal void UpdatePreview(Vector3 position, Quaternion rotation, float fieldOfView, float viewerDistance, float scale)
         {
-            outputCamera = output;
             previewCamera.transform.SetPositionAndRotation(position, rotation);
             previewCamera.fieldOfView = fieldOfView;
             float now = Time.unscaledTime;
@@ -204,7 +202,7 @@ namespace Zetori.GameCamera.Vr
             idleButton = CreateMaterial(ButtonColor, ButtonDrawOrder);
             activeButton = CreateMaterial(UI.ColorSpace.Current.Color, ButtonDrawOrder);
             Place(parts["body"], "body", CreateTexturedMaterial(bodyTexture, 0), root.transform);
-            Place(parts["screen"], "screen", CreateTexturedMaterial(previewTexture, ScreenDrawOrder), root.transform);
+            screenRenderer = Place(parts["screen"], "screen", CreateTexturedMaterial(previewTexture, ScreenDrawOrder), root.transform);
 
             ModeButtons = new[]
             {
@@ -222,8 +220,7 @@ namespace Zetori.GameCamera.Vr
             ApplyLens();
             BuildFlipButton(parts);
 
-            renderers = root.GetComponentsInChildren<Renderer>(true);
-            foreach (Renderer renderer in renderers)
+            foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>(true))
             {
                 renderer.shadowCastingMode = ShadowCastingMode.Off;
                 renderer.receiveShadows = false;
@@ -305,11 +302,10 @@ namespace Zetori.GameCamera.Vr
 
         private void OnBeginCameraRendering(ScriptableRenderContext context, Camera camera)
         {
-            bool hidden = camera == previewCamera || camera == outputCamera;
-            if (hidden == renderersHidden) return;
-            renderersHidden = hidden;
-            foreach (Renderer renderer in renderers)
-                if (renderer != null) renderer.forceRenderingOff = hidden;
+            bool hidden = camera == previewCamera;
+            if (hidden == screenHidden) return;
+            screenHidden = hidden;
+            if (screenRenderer != null) screenRenderer.forceRenderingOff = hidden;
         }
 
         public void Dispose()

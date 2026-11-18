@@ -97,7 +97,7 @@ namespace Zetori.GameCamera.Vr
             if (model != null && fade > 0f)
             {
                 float viewerDistance = Vector3.Distance(head.position, model.Root.position);
-                model.UpdatePreview(output.Camera, view.Position, view.Rotation, CameraManager.fieldOfView, viewerDistance, scale);
+                model.UpdatePreview(view.Position, view.Rotation, CameraManager.fieldOfView, viewerDistance, scale);
             }
         }
 
