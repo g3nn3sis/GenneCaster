@@ -82,6 +82,12 @@
 		<EmbeddedResource Include="Resources\Icons\steam.png" LogicalName="Zetori.Icons.steam.png" />
 	</ItemGroup>
 
+	<!-- VR camera tablet exported from Resources\Models\vr_camera.blend: meshes plus the baked body texture. -->
+	<ItemGroup>
+		<EmbeddedResource Include="Resources\Models\vr_camera.zmdl" LogicalName="Zetori.Models.vr_camera.zmdl" />
+		<EmbeddedResource Include="Resources\Models\vr_camera.png" LogicalName="Zetori.Models.vr_camera.png" />
+	</ItemGroup>
+
 	<!-- HUD asset bundle (leaderboard + closest-lava canvases), authored in Unity 6000.2.9f1 to match
 	     Gorilla Tag and embedded in the DLL so it loads offline through HudAssets. -->
 	<ItemGroup>

@@ -3,6 +3,7 @@
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
 using Zetori.GameCamera;
+using Zetori.Player;
 using UnityEngine;
 
 namespace Zetori.Replay
@@ -27,6 +28,10 @@ namespace Zetori.Replay
         private int appliedMaterial = -1;
         private Pose filteredRoot;
         private readonly Pose[] filteredLimbs = new Pose[LimbSample.Count];
+        private readonly ArmSwing leftSwing = new ArmSwing();
+        private readonly ArmSwing rightSwing = new ArmSwing();
+        private bool exaggeratingArms;
+        private float armStep;
 
         internal ReplayActor Actor { get; }
         internal Transform Body => root.transform;
@@ -53,8 +58,9 @@ namespace Zetori.Replay
             root.SetActive(false);
         }
 
-        internal void Pose(float time, float step, float rigLerp)
+        internal void Pose(float time, float step, float rigLerp, bool exaggerateArms)
         {
+            SetArmExaggeration(exaggerateArms, step);
             if (!Actor.TryFindSpan(time, ReplayRecording.SampleInterval, out int index, out float blend))
             {
                 if (root.activeSelf) root.SetActive(false);
@@ -82,6 +88,22 @@ namespace Zetori.Replay
             voice.transform.position = Eyes.position;
             Current = blend < 0.5f ? from : to;
             ApplyMaterial(Current.Material);
+        }
+
+        private void SetArmExaggeration(bool exaggerate, float step)
+        {
+            armStep = Mathf.Abs(step);
+            if (exaggerate == exaggeratingArms) return;
+            exaggeratingArms = exaggerate;
+            leftSwing.Reset();
+            rightSwing.Reset();
+        }
+
+        private Vector3 ExaggeratedReach(int limb, Vector3 reach)
+        {
+            if (!exaggeratingArms) return reach;
+            ArmSwing swing = limb == LimbSample.LeftHand ? leftSwing : rightSwing;
+            return swing.Exaggerate(root.transform, reach, ArmExaggeration.Amount, armStep);
         }
 
         private Pose CorrectLimbs(ActorFrame from, ActorFrame to, float blend, float follow, Pose eyes)
@@ -113,7 +135,7 @@ namespace Zetori.Replay
             Vector3 reach = transform.TransformPoint(target.position + target.rotation * (Quaternion.Inverse(shown.rotation) * (local - shown.position)));
             Quaternion grip = WorldDelta(shown, target) * hand.rotation;
             Vector3 wrist = lower.InverseTransformPoint(hand.position);
-            TwoBoneIK.Solve(upper, lower, hand, reach);
+            TwoBoneIK.Solve(upper, lower, hand, ExaggeratedReach(limb, reach));
             hand.SetPositionAndRotation(lower.TransformPoint(wrist), grip);
         }
 

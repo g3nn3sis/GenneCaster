@@ -21,3 +21,4 @@ Libs/
 !.env.example
 *secrets*.json
 *secrets*.props
+*.blend1

@@ -5,6 +5,7 @@
 using BepInEx.Configuration;
 using Zetori.Game;
 using Zetori.GameCamera;
+using Zetori.GameCamera.Vr;
 using System.IO;
 using System.Text;
 using UnityEngine;
@@ -21,6 +22,7 @@ namespace Zetori.Base
         private static float lastChange;
 
         internal static ConfigEntry<CameraMode> ActiveCameraMode = null!;
+        internal static ConfigEntry<VrCameraMode> VrMode = null!;
         internal static ConfigEntry<float> FieldOfView = null!;
         internal static ConfigEntry<float> NearClipPlane = null!;
         internal static ConfigEntry<bool> AudioListener = null!;
@@ -30,6 +32,8 @@ namespace Zetori.Base
         internal static ConfigEntry<float> OrbitSpeed = null!;
         internal static ConfigEntry<bool> OrbitAutoRotate = null!;
         internal static ConfigEntry<float> BodyLerping = null!;
+        internal static ConfigEntry<bool> RigExaggeration = null!;
+        internal static ConfigEntry<float> RigExaggerationAmount = null!;
         internal static ConfigEntry<bool> RegisterNewRigs = null!;
         internal static ConfigEntry<bool> Microphone = null!;
         internal static ConfigEntry<Key> PushToTalkKey = null!;
@@ -139,6 +143,7 @@ namespace Zetori.Base
             config.SaveOnConfigSet = false;
 
             ActiveCameraMode = config.Bind("Camera", "Mode", CameraMode.Spectator, "Default shows your own first person view, Spectator follows the selected player, Freecam flies the camera on its own, Web watches the action from placed nodes.");
+            VrMode = config.Bind("VR Camera", "Mode", VrCameraMode.Handheld, "What the in-game VR camera shows: FirstPerson, ThirdPerson, Follower or Handheld.");
             FieldOfView = Range(config, "Camera", "Field Of View", 100f, 10f, 130f);
             NearClipPlane = Range(config, "Camera", "Near Clip", 0.01f, 0.01f, 0.99f);
             AudioListener = config.Bind("Camera", "Audio Listener", true, "Hear the game from the spectator camera.");
@@ -148,6 +153,8 @@ namespace Zetori.Base
             OrbitSpeed = Range(config, "Camera", "Orbit Speed", 150f, 10f, 600f, "Arrow key orbit speed in degrees per second.");
             OrbitAutoRotate = config.Bind("Camera", "Auto Orbit", false, "Slowly rotate the orbit camera around the spectated player with no input. Arrow keys still steer on top.");
             BodyLerping = Range(config, "Camera", "Body Lerping", 1f, 0.1f, 2.5f, "Multiplier on how quickly other players' rigs move to their networked position.");
+            RigExaggeration = config.Bind("Camera", "Rig Exaggeration", false, "Make the spectated player's arm movements bigger on your screen only.");
+            RigExaggerationAmount = Range(config, "Camera", "Rig Exaggeration Amount", 1.5f, 1f, 3f, "How much the spectated player's arm movements are multiplied.");
             RegisterNewRigs = config.Bind("Camera", "Register New Rigs", true, "Keep the player list updated as players join and leave.");
             Microphone = config.Bind("Camera", "Microphone", false, "On is all chat, off is push to talk.");
             PushToTalkKey = config.Bind("Camera", "Hold To Talk Key", Key.V, "Hold to open the mic to all chat; release returns to the Microphone setting (push to talk by default).");

@@ -3,6 +3,7 @@
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
 using Zetori.Base;
+using Zetori.GameCamera.Vr;
 using Zetori.Replay;
 using UnityEngine;
 
@@ -17,6 +18,9 @@ namespace Zetori.UI
         private float panelProgress;
         private float timelineProgress;
         private bool wasReplaying;
+        private bool wasInVr;
+        private bool desktopDefaultApplied;
+        private bool vrDefaultApplied;
         internal static bool Visible = true;
         internal static bool TimelineVisible = true;
 
@@ -24,12 +28,30 @@ namespace Zetori.UI
         {
             panels ??= new PanelOrchestrator();
             KeyBinds.Tick();
+            ApplyDefaultPreset(panels);
+            ClosePanelsOnEnteringVr();
             if (CasterConfig.KeyPressed(CasterConfig.MenuKey)) Visible = !Visible;
             SyncTimelineToggle();
             float step = Time.unscaledDeltaTime / FadeDuration;
             panelProgress = Mathf.MoveTowards(panelProgress, Visible ? 1f : 0f, step);
             timelineProgress = Mathf.MoveTowards(timelineProgress, TimelineVisible ? 1f : 0f, step);
             if (panelProgress > 0f) panels.Tick(Time.unscaledDeltaTime, Fade(timelineProgress));
+        }
+
+        private void ApplyDefaultPreset(PanelOrchestrator orchestrator)
+        {
+            bool inVr = VrCameraRig.HeadsetActive;
+            if (inVr ? vrDefaultApplied : desktopDefaultApplied) return;
+            if (inVr) vrDefaultApplied = true;
+            else desktopDefaultApplied = true;
+            if (Presets.LoadDefault(inVr ? PresetPlatform.Vr : PresetPlatform.Desktop)) orchestrator.ReapplyFromConfig();
+        }
+
+        private void ClosePanelsOnEnteringVr()
+        {
+            bool inVr = VrCameraRig.HeadsetActive;
+            if (inVr && !wasInVr) Visible = false;
+            wasInVr = inVr;
         }
 
         private void SyncTimelineToggle()

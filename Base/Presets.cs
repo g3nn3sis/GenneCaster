@@ -76,6 +76,15 @@ namespace Zetori.Base
             }
         }
 
+        internal static bool LoadDefault(PresetPlatform platform)
+        {
+            string? name = PresetDefaults.Get(platform);
+            if (name == null) return false;
+            if (Load(name)) return true;
+            Log.Warning($"The default {platform} preset '{name}' could not be loaded.");
+            return false;
+        }
+
         internal static bool Rename(string name, string rawNewName)
         {
             string newName = Sanitize(rawNewName);
@@ -89,6 +98,7 @@ namespace Zetori.Base
                 if (!File.Exists(source)) return false;
                 if (!string.Equals(newName, name, StringComparison.OrdinalIgnoreCase) && File.Exists(target)) return false;
                 File.Move(source, target);
+                PresetDefaults.Renamed(name, newName);
                 Log.Info($"Renamed preset '{name}' to '{newName}'.");
                 return true;
             }
@@ -107,6 +117,7 @@ namespace Zetori.Base
             try
             {
                 if (File.Exists(path)) File.Delete(path);
+                PresetDefaults.Removed(name);
                 Log.Info($"Deleted preset '{name}'.");
             }
             catch (Exception e)

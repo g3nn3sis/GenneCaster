@@ -17,5 +17,6 @@ namespace Zetori.Base
         internal static string Replays => Path.Combine(Root, "Replays");
         internal static string Webs => Path.Combine(Root, "Webs");
         internal static string DefaultConfig => Path.Combine(Configs, DefaultConfigName + ConfigExtension);
+        internal static string PresetDefaults => Path.Combine(Root, "PresetDefaults.txt");
     }
 }

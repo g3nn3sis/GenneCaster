@@ -31,14 +31,26 @@ Each release is built against the Gorilla Tag version that was current when it w
 | Time | Morning, day, evening, night, rain |
 | Maps | Load any map |
 | Player | Your name and color, with a preview |
-| Settings | Microphone mode, audio from the spectator camera, player list updates, Discord presence, VSync, AFK kick, rig interpolation |
+| Settings | Microphone mode, audio from the spectator camera, player list updates, Discord presence, VSync, AFK kick, rig interpolation, and Rig Exaggeration, which multiplies the spectated player's arm movements from 1x to 3x on your screen only, live and in replays (paused while recording) |
 | Keybinds | Every key the mod uses: click a row, then press the new key (click the row again to cancel); **Reset Keys** restores the defaults. The number keys that pick a player are fixed |
 | Theme | Accent color of every panel and the minimap |
-| Presets | Save the current settings as named presets and load or delete them later; toggle autosave and save settings on demand |
+| Presets | Save the current settings as named presets and load or delete them later; choose which preset loads at startup on desktop and in VR; toggle autosave and save settings on demand |
 
 The Leaderboard, Closest Lava, Scoreboard and Kill Feed overlays are Unity canvases loaded from an asset bundle embedded in the DLL, so they render at the same size on any resolution. They all share one font, picked from the game's fonts with the Previous/Next Font buttons in any of their panels. The Leaderboard, Scoreboard, Kill Feed and MiniMap each have a **Position** button that steps through their spots. Only one of them can use a corner at a time: the button skips corners that are in use, and turning one on in a corner that is already used moves it to a free corner. If all three corners are needed, the Scoreboard steps back to top-center.
 
 Every panel is a thin title bar with an arrow. Click the bar or its arrow to slide the panel open or closed. The bars stack themselves into columns grouped by purpose and slide to make room as panels open. Drag a bar to move it: the other panels slide apart as you go, and it settles into the column and place where you let go, so panels never overlap. Turn **Panel Snapping** off in the UI Control panel to leave panels exactly where you drop them instead, where they are free to overlap. The arrangement is saved, and the **Reset Layout** button in the Zetori panel puts every panel back. The interface scales with your resolution, and the **UI Scale** buttons in the UI Control panel add your own multiplier on top, from 0.75x to 1x in 0.05 steps.
+
+## VR camera
+
+When a headset is active, the panels start closed (`Esc` still opens them) and Zetori gives you a camera tablet you can hold in the game. Only you can see it, and it is left out of its own footage. The desktop window shows what the camera sees.
+
+| VR input | Action |
+| --- | --- |
+| Double-press the right primary button (`A`) | Raise the tablet out of the ground with a fade in, or fade it away if it is out; from Follower, raise it and return to Handheld |
+| Grip either side bar | Hold it; let go and it stays in the air |
+| Touch `FIRST`, `THIRD`, `FOLLOW` or `HAND` beside the screen | Choose First Person, Third Person, Follower or Handheld; the tablet disappears while following you |
+| Touch `FOV -` or `FOV +` under the screen | Change the field of view in steps of 5, from 30 to 130 |
+| Touch the flip button under the screen (Handheld) | Switch between the rear view and the view from the screen side |
 
 ## Controls
 
@@ -66,7 +78,7 @@ Every panel is a thin title bar with an arrow. Click the bar or its arrow to sli
 
 Settings are saved to `Gorilla Tag\Zetori\Configs\Default.cfg` a second after you change them, and when the game closes. Turn **Autosave** off in the Presets panel to stop that; settings are then written only when you press **Save Settings** or save a preset. The file holds only section headers and `Key = value` lines, with no comments. You can edit it while the game is closed; a value outside a setting's allowed range is clamped when the game loads it.
 
-Presets are stored as `.cfg` files next to `Default.cfg` in `Gorilla Tag\Zetori\Configs` (`Default` is reserved for the live settings). Loading one applies it immediately, including the panel theme and layout. On first launch, an existing config and presets from `BepInEx\config` are moved there automatically.
+Presets are stored as `.cfg` files next to `Default.cfg` in `Gorilla Tag\Zetori\Configs` (`Default` is reserved for the live settings). Loading one applies it immediately, including the panel theme and layout. **Desktop Default** and **VR Default** in the Presets panel pick the preset loaded when the game starts in that mode: click to step forward through the presets and None, right-click to step back. The choices are kept in `Gorilla Tag\Zetori\PresetDefaults.txt`, so loading a preset never changes them. On first launch, an existing config and presets from `BepInEx\config` are moved there automatically.
 
 Replays are saved as compressed `.gcreplay` files in `Gorilla Tag\Zetori\Replays`, named by the date and time recording stopped. The Replay panel lists them to play or delete.
 

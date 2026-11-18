@@ -85,7 +85,7 @@ namespace Zetori.Replay
             posedCursor = Cursor;
             foreach (ReplayPuppet puppet in puppets)
             {
-                puppet.Pose(Cursor, step, RigLerp);
+                puppet.Pose(Cursor, step, RigLerp, ArmExaggeration.Active && IsSpectating(puppet));
                 puppet.UpdateVoice(Cursor, Playing);
             }
             ApplyEnvironment();

@@ -8,3 +8,5 @@
 *.jpg binary
 *.dll binary
 *.bundle binary
+*.zmdl binary
+*.blend binary

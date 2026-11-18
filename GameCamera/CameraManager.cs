@@ -4,6 +4,7 @@
 
 using Zetori.Base;
 using Zetori.GameCamera.Modes;
+using Zetori.GameCamera.Vr;
 using Zetori.Player;
 using Zetori.Replay;
 using UnityEngine;
@@ -22,11 +23,18 @@ namespace Zetori.GameCamera
 
         private float nextAttempt;
         private CameraMode? runningMode;
+        private VrCameraRig? vrRig;
 
         internal void LateUpdate()
         {
             if (FliesCamera && GorillaController.wasd) GorillaController.wasd = false;
             if (!EnsureCamera()) return;
+            if (VrCameraRig.HeadsetActive)
+            {
+                RunVr(camera!);
+                return;
+            }
+            vrRig?.Hide();
             camera!.Apply(fieldOfView, nearClipPlane, audioListener);
             SwitchMode(camera);
             switch (runningMode)
@@ -46,6 +54,22 @@ namespace Zetori.GameCamera
         {
             if (ReplaySession.Player is ReplayPlayer replay) replay.Camera = CameraMode.Web;
             else mode = CameraMode.Web;
+        }
+
+        private void RunVr(CameraWrapper camera)
+        {
+            LeaveDesktopMode();
+            vrRig ??= new VrCameraRig();
+            camera.Apply(fieldOfView, nearClipPlane, audioListener && !vrRig.HeadsetHearsGame);
+            try { vrRig.Tick(camera); }
+            catch (Exception e) { Log.ExceptionOnce("vr-camera", e, "Updating the VR camera failed"); }
+        }
+
+        private void LeaveDesktopMode()
+        {
+            if (runningMode == CameraMode.Freecam) FreecamCamera.Exit();
+            if (runningMode == CameraMode.Web) WebCamera.Exit();
+            runningMode = null;
         }
 
         private void SwitchMode(CameraWrapper camera)
@@ -117,6 +141,8 @@ namespace Zetori.GameCamera
         {
             FreecamCamera.Exit();
             WebCamera.Exit();
+            vrRig?.Dispose();
+            vrRig = null;
             base.OnDestroy();
         }
     }

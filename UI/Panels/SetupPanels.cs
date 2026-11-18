@@ -5,6 +5,7 @@
 using Zetori.Base;
 using Zetori.GameCamera;
 using Zetori.Player;
+using Zetori.Replay;
 using UnityEngine;
 
 namespace Zetori.UI.Panels
@@ -12,9 +13,14 @@ namespace Zetori.UI.Panels
     internal sealed class SetupPanels
     {
         private const int PresetNameLength = 24;
+        private const string NoDefaultPreset = "None";
 
         private readonly PanelOrchestrator owner;
         private readonly Action[] themeButtons;
+        private readonly Action nextDesktopDefault;
+        private readonly Action previousDesktopDefault;
+        private readonly Action nextVrDefault;
+        private readonly Action previousVrDefault;
         private Vector2 themeScroll;
         private Vector2 presetScroll;
         private string presetName = string.Empty;
@@ -35,6 +41,10 @@ namespace Zetori.UI.Panels
                 int index = i;
                 themeButtons[i] = () => owner.SetTheme(index);
             }
+            nextDesktopDefault = () => StepDefaultPreset(PresetPlatform.Desktop, 1);
+            previousDesktopDefault = () => StepDefaultPreset(PresetPlatform.Desktop, -1);
+            nextVrDefault = () => StepDefaultPreset(PresetPlatform.Vr, 1);
+            previousVrDefault = () => StepDefaultPreset(PresetPlatform.Vr, -1);
         }
 
         internal static void DrawPlayer(Panel panel)
@@ -60,6 +70,15 @@ namespace Zetori.UI.Panels
             CasterConfig.DisableVSync.Value = panel.Toggle("Disable VSync", CasterConfig.DisableVSync.Value);
             CasterConfig.DisableAfkKick.Value = panel.Toggle("Disable AFK Kick", CasterConfig.DisableAfkKick.Value);
             NetworkedPlayerManager.bodyLerping = panel.Slider("Rig Interpolation", NetworkedPlayerManager.bodyLerping, 0.1f, 2.5f, "F2", "x");
+            DrawRigExaggeration(panel);
+        }
+
+        private static void DrawRigExaggeration(Panel panel)
+        {
+            ArmExaggeration.Enabled = panel.Toggle("Rig Exaggeration", ArmExaggeration.Enabled);
+            if (!ArmExaggeration.Enabled) return;
+            ArmExaggeration.Amount = panel.Slider("Arm Movement", ArmExaggeration.Amount, ArmExaggeration.MinimumAmount, ArmExaggeration.MaximumAmount, "F2", "x");
+            if (ReplaySession.IsRecording) panel.Label("Paused while recording");
         }
 
         internal void DrawUiControl(Panel panel)
@@ -109,7 +128,9 @@ namespace Zetori.UI.Panels
                 panel.Label("No presets saved.");
                 return;
             }
-            presetScroll = panel.ScrollArea(presetScroll, Panel.ListHeight, presetNames.Length, () =>
+            panel.Button($"Desktop Default: {DefaultPresetName(PresetPlatform.Desktop)}", nextDesktopDefault, previousDesktopDefault);
+            panel.Button($"VR Default: {DefaultPresetName(PresetPlatform.Vr)}", nextVrDefault, previousVrDefault);
+            presetScroll =panel.ScrollArea(presetScroll, Panel.ListHeight, presetNames.Length, () =>
             {
                 for (int i = 0; i < presetNames.Length; i++)
                 {
@@ -126,6 +147,17 @@ namespace Zetori.UI.Panels
                     });
                 }
             });
+        }
+
+        private static string DefaultPresetName(PresetPlatform platform) => PresetDefaults.Get(platform) ?? NoDefaultPreset;
+
+        private void StepDefaultPreset(PresetPlatform platform, int step)
+        {
+            string? current = PresetDefaults.Get(platform);
+            int index = current == null ? -1 : Array.FindIndex(presetNames, name => string.Equals(name, current, StringComparison.OrdinalIgnoreCase));
+            int choices = presetNames.Length + 1;
+            int next = (index + 1 + step + choices) % choices - 1;
+            PresetDefaults.Set(platform, next < 0 ? null : presetNames[next]);
         }
 
         private void DrawRenameRow(Panel panel, string name)

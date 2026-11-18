@@ -49,23 +49,23 @@ namespace Zetori.Game
             return clones.ToArray();
         }
 
-        private static Sprite? LoadIconSprite(string resourceName)
+        internal static Texture2D? LoadTexture(string resourceName, bool mipmaps = false)
         {
             byte[]? bytes = EmbeddedResources.Read(resourceName);
             if (bytes == null)
             {
-                Log.Error($"Missing embedded icon {resourceName}.");
+                Log.Error($"Missing embedded image {resourceName}.");
                 return null;
             }
             if (LoadImageBytes == null)
             {
-                Log.Error("ImageConversion.LoadImage(Texture2D, byte[], bool) was not found; platform icons cannot load.");
+                Log.Error("ImageConversion.LoadImage(Texture2D, byte[], bool) was not found; embedded images cannot load.");
                 return null;
             }
-            var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            var texture = new Texture2D(2, 2, TextureFormat.RGBA32, mipmaps);
             if (!(LoadImageBytes.Invoke(null, new object[] { texture, bytes, false }) is bool loaded && loaded))
             {
-                Log.Error($"Failed to decode embedded icon {resourceName} ({bytes.Length} bytes).");
+                Log.Error($"Failed to decode embedded image {resourceName} ({bytes.Length} bytes).");
                 Destroy(texture);
                 return null;
             }
@@ -73,6 +73,13 @@ namespace Zetori.Game
             texture.wrapMode = TextureWrapMode.Clamp;
             texture.filterMode = FilterMode.Bilinear;
             texture.hideFlags = HideFlags.DontUnloadUnusedAsset;
+            return texture;
+        }
+
+        private static Sprite? LoadIconSprite(string resourceName)
+        {
+            Texture2D? texture = LoadTexture(resourceName);
+            if (texture == null) return null;
             Sprite sprite = Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), texture.height, 0, SpriteMeshType.FullRect);
             sprite.name = resourceName;
             sprite.hideFlags = HideFlags.DontUnloadUnusedAsset;
