@@ -36,7 +36,7 @@ namespace Zetori.UI.Panels
             PanelId.MapLoader => world.DrawMapLoader,
             PanelId.Player => SetupPanels.DrawPlayer,
             PanelId.PlayerSettings => SetupPanels.DrawSettings,
-            PanelId.Theme => setup.DrawThemes,
+            PanelId.Theme => setup.DrawUiControl,
             PanelId.Presets => setup.DrawPresets,
             PanelId.Keybinds => keybinds.Draw,
             _ => DrawNothing

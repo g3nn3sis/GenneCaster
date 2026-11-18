@@ -64,8 +64,8 @@ namespace Zetori.UI.Panels
 
         private static void DrawSmoothing(Panel panel)
         {
-            CasterConfig.PositionSmoothing.Value = panel.Slider("Position Smoothing", CasterConfig.PositionSmoothing.Value, 0f, 0.95f);
-            CasterConfig.RotationSmoothing.Value = panel.Slider("Rotation Smoothing", CasterConfig.RotationSmoothing.Value, 0f, 0.75f);
+            CasterConfig.PositionSmoothing.Value = panel.Slider("Position Smoothing", CasterConfig.PositionSmoothing.Value, 0f, CasterConfig.MaximumPositionSmoothing);
+            CasterConfig.RotationSmoothing.Value = panel.Slider("Rotation Smoothing", CasterConfig.RotationSmoothing.Value, 0f, CasterConfig.MaximumRotationSmoothing);
         }
 
         internal static void DrawWasd(Panel panel)

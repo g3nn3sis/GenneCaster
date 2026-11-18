@@ -123,7 +123,13 @@ namespace Zetori.Base
         internal static ConfigEntry<bool> DisableAfkKick = null!;
 
         internal static ConfigEntry<string> Theme = null!;
+        internal const float MinimumUiScale = 0.75f;
+        internal const float MaximumUiScale = 1f;
+        internal const float MaximumPositionSmoothing = 0.95f;
+        internal const float MaximumRotationSmoothing = 0.75f;
+
         internal static ConfigEntry<float> UiScale = null!;
+        internal static ConfigEntry<bool> SnapPanels = null!;
         internal static ConfigEntry<Key> MenuKey = null!;
         internal static ConfigEntry<bool> AutoSave = null!;
 
@@ -137,8 +143,8 @@ namespace Zetori.Base
             NearClipPlane = Range(config, "Camera", "Near Clip", 0.01f, 0.01f, 0.99f);
             AudioListener = config.Bind("Camera", "Audio Listener", true, "Hear the game from the spectator camera.");
             HeadDistance = Range(config, "Camera", "Head Distance", 0f, 0f, 0.99f, "0 is first person, anything higher orbits the player.");
-            PositionSmoothing = Range(config, "Camera", "Position Smoothing", 0.05f, 0f, 0.95f, "How much the orbit camera lags behind the player. 0 follows instantly.");
-            RotationSmoothing = Range(config, "Camera", "Rotation Smoothing", 0f, 0f, 0.75f, "How much the orbit camera's rotation lags behind. 0 is the lightest smoothing.");
+            PositionSmoothing = Range(config, "Camera", "Position Smoothing", 0.05f, 0f, MaximumPositionSmoothing, "How much the orbit camera lags behind the player. 0 follows instantly.");
+            RotationSmoothing = Range(config, "Camera", "Rotation Smoothing", 0f, 0f, MaximumRotationSmoothing, "How much the orbit camera's rotation lags behind. 0 follows instantly.");
             OrbitSpeed = Range(config, "Camera", "Orbit Speed", 150f, 10f, 600f, "Arrow key orbit speed in degrees per second.");
             OrbitAutoRotate = config.Bind("Camera", "Auto Orbit", false, "Slowly rotate the orbit camera around the spectated player with no input. Arrow keys still steer on top.");
             BodyLerping = Range(config, "Camera", "Body Lerping", 1f, 0.1f, 2.5f, "Multiplier on how quickly other players' rigs move to their networked position.");
@@ -236,8 +242,9 @@ namespace Zetori.Base
             DisableVSync = config.Bind("Game", "Disable VSync", true, "Turn off VSync so the spectator view runs at the highest frame rate.");
             DisableAfkKick = config.Bind("Game", "Disable AFK Kick", true, "Stop the game from kicking you for being idle while spectating.");
 
-            Theme = config.Bind("Interface", "Theme Name", "Red", "Name of a theme from the Theme panel's list.");
-            UiScale = Range(config, "Interface", "UI Scale", 0.75f, 0.5f, 2f, "Multiplier on top of automatic resolution scaling.");
+            Theme = config.Bind("Interface", "Theme Name", "Red", "Name of a theme from the UI Control panel's list.");
+            UiScale = Range(config, "Interface", "UI Scale", MinimumUiScale, MinimumUiScale, MaximumUiScale, "Multiplier on top of automatic resolution scaling.");
+            SnapPanels = config.Bind("Interface", "Snap Panels", true, "Stack panels into columns from the top of the screen. When off, panels stay where they are dropped.");
             MenuKey = config.Bind("Interface", "Menu Key", Key.Escape, "Key that shows and hides the panels.");
             AutoSave = config.Bind("Interface", "Autosave", true, "Save setting changes automatically. When off, save with the Presets panel's Save Settings button or by saving a preset.");
 

@@ -62,7 +62,24 @@ namespace Zetori.UI.Panels
             NetworkedPlayerManager.bodyLerping = panel.Slider("Rig Interpolation", NetworkedPlayerManager.bodyLerping, 0.1f, 2.5f, "F2", "x");
         }
 
-        internal void DrawThemes(Panel panel)
+        internal void DrawUiControl(Panel panel)
+        {
+            DrawUiScale(panel);
+            CasterConfig.SnapPanels.Value = panel.Toggle("Panel Snapping", CasterConfig.SnapPanels.Value);
+            DrawThemes(panel);
+        }
+
+        private static void DrawUiScale(Panel panel)
+        {
+            panel.Label($"UI Scale: {UiScale.Multiplier:F2}x");
+            panel.HorizontalArea(() =>
+            {
+                panel.Button("-", UiScale.Decrease, UiScale.CanDecrease);
+                panel.Button("+", UiScale.Increase, UiScale.CanIncrease);
+            });
+        }
+
+        private void DrawThemes(Panel panel)
         {
             panel.Label($"Current: {ColorSpace.Current.Name}");
             themeScroll = panel.ScrollArea(themeScroll, Panel.ListHeight, ColorSpace.Themes.Length, () =>

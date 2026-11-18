@@ -39,8 +39,8 @@ namespace Zetori.GameCamera.Modes
             Quaternion orbit = Quaternion.Euler(OrbitPitch, body.eulerAngles.y + OrbitYaw, 0f);
             Vector3 desired = pivot + orbit * Vector3.back * (HeadDistance * OrbitDistanceScale);
             Quaternion look = Quaternion.LookRotation(pivot - desired, Vector3.up);
-            float positionStep = Smoothing.Step(CasterConfig.PositionSmoothing.Value, deltaTime);
-            float rotationStep = Smoothing.Step(0.5f + CasterConfig.RotationSmoothing.Value * 0.5f, deltaTime);
+            float positionStep = Smoothing.LagStep(CasterConfig.PositionSmoothing.Value, CasterConfig.MaximumPositionSmoothing, deltaTime);
+            float rotationStep = Smoothing.LagStep(CasterConfig.RotationSmoothing.Value, CasterConfig.MaximumRotationSmoothing, deltaTime);
             camera.SetPose(
                 Vector3.Lerp(camera.Transform.position, desired, positionStep),
                 Quaternion.Slerp(camera.Transform.rotation, look, rotationStep));

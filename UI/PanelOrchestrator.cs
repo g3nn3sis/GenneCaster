@@ -27,6 +27,7 @@ namespace Zetori.UI
         private readonly int[] columnOf = new int[PanelCount];
         private readonly float[] rowOf = new float[PanelCount];
         private readonly float[] heights = new float[PanelCount];
+        private readonly Vector2[] freePositions = new Vector2[PanelCount];
         private PanelId? floating;
         private int originColumn;
         private int originIndex;
@@ -34,9 +35,11 @@ namespace Zetori.UI
         private int slotIndex;
         private bool placed;
         private bool replayLayout;
+        private bool snapping;
 
         internal PanelOrchestrator()
         {
+            snapping = CasterConfig.SnapPanels.Value;
             var content = new PanelContent(this);
             Color32 accent = ColorSpace.Current.Color;
             for (int i = 0; i < PanelCount; i++)
@@ -64,9 +67,14 @@ namespace Zetori.UI
             }
             for (int i = 0; i < PanelCount; i++)
             {
-                if (!PositionFormat.TryParse(positions[i].Value, out Vector2 saved)) continue;
+                if (!PositionFormat.TryParse(positions[i].Value, out Vector2 saved))
+                {
+                    freePositions[i] = new Vector2(Margin + columnOf[i] * ColumnPitch, rowOf[i]);
+                    continue;
+                }
                 columnOf[i] = Mathf.RoundToInt((saved.x - Margin) / ColumnPitch);
                 rowOf[i] = saved.y;
+                freePositions[i] = saved;
             }
             layout.Arrange(columnOf, rowOf);
             floating = null;
@@ -83,9 +91,56 @@ namespace Zetori.UI
             }
             PanelId? leader = SyncReplayLayout() ? PanelId.Replay : (PanelId?)null;
             float top = leader != null ? Mathf.Lerp(Margin, ReplayTimeline.Bottom + Gap, timelinePresence) : Margin;
+            SyncSnapping();
+            if (snapping) PlaceSnapped(leader, top, blend);
+            else PlaceFree(leader != null ? top : 0f, blend);
+        }
+
+        private void SyncSnapping()
+        {
+            bool wanted = CasterConfig.SnapPanels.Value;
+            if (wanted == snapping) return;
+            snapping = wanted;
+            if (snapping) ArrangeFromConfig();
+            else CaptureFreePositions();
+        }
+
+        private void CaptureFreePositions()
+        {
+            floating = null;
+            for (int i = 0; i < PanelCount; i++) StoreFreePosition(i);
+        }
+
+        private void StoreFreePosition(int index)
+        {
+            freePositions[index] = panels[index].Rect.position;
+            positions[index].Value = PositionFormat.Format(freePositions[index]);
+        }
+
+        private void PlaceSnapped(PanelId? leader, float top, float blend)
+        {
             layout.Fit(Mathf.FloorToInt((UiScale.Width - Margin + Gap) / ColumnPitch));
             TrackFloating(leader, top);
             for (int column = 0; column < layout.ColumnCount; column++) PlaceColumn(column, leader, top, blend);
+        }
+
+        private void PlaceFree(float minimumY, float blend)
+        {
+            PanelId? dragged = DraggedPanel();
+            if (floating is PanelId released && dragged != released) StoreFreePosition((int)released);
+            floating = dragged;
+            for (int i = 0; i < PanelCount; i++)
+            {
+                if (floating == (PanelId)i) continue;
+                panels[i].SetPosition(Vector2.Lerp(panels[i].Rect.position, FreeTarget(i, minimumY), blend));
+            }
+        }
+
+        private Vector2 FreeTarget(int index, float minimumY)
+        {
+            Rect target = panels[index].Rect;
+            target.position = new Vector2(freePositions[index].x, Mathf.Max(freePositions[index].y, minimumY));
+            return UiScale.ClampToScreen(target).position;
         }
 
         private bool SyncReplayLayout()
@@ -181,6 +236,7 @@ namespace Zetori.UI
         {
             Color32 accent = ColorSpace.Current.Color;
             foreach (Panel panel in panels) panel.SetAccent(accent);
+            snapping = CasterConfig.SnapPanels.Value;
             ArrangeFromConfig();
         }
 

@@ -32,7 +32,7 @@ namespace Zetori.UI
             PanelId.MapLoader => "Maps",
             PanelId.Player => "Player",
             PanelId.PlayerSettings => "Settings",
-            PanelId.Theme => "Theme",
+            PanelId.Theme => "UI Control",
             PanelId.Presets => "Presets",
             PanelId.Keybinds => "Keybinds",
             _ => id.ToString()

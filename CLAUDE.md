@@ -84,8 +84,8 @@ newline at end of file. Keep related code grouped and ordered the same way acros
 - UI is authored at 1080p through `UiScale`; it must look right from 720p to 4K.
 - Input uses the new Input System via `CasterConfig.KeyPressed/KeyHeld`, not legacy `Input`.
 - Every panel is a collapsible title bar (`Panel`); there is no switch list and no section headers
-  inside panels. Panels always sit in a column slot (`PanelLayout`, pure logic with no Unity types so
-  it can be exercised outside the game) and never overlap; dragging one reorders the slots live. A new panel needs a `PanelId`, a title and default column in `PanelCatalog`, and a draw
+  inside panels. With `CasterConfig.SnapPanels` on (the default), panels sit in a column slot (`PanelLayout`, pure logic with no Unity types so
+  it can be exercised outside the game) and never overlap; dragging one reorders the slots live. With it off, panels stay where they are dropped and may overlap. A new panel needs a `PanelId`, a title and default column in `PanelCatalog`, and a draw
   method wired in `PanelContent.For`. Never rename a `PanelId` member — it is the saved `Layout` key.
 - A canvas HUD overlay subclasses `HudOverlay` (`Active`, `Prefab`, `Bind`, `Refresh`); the base owns
   building, showing, hiding, font and teardown.
