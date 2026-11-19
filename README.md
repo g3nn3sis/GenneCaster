@@ -42,7 +42,7 @@ Every panel is a thin title bar with an arrow. Click the bar or its arrow to sli
 
 ## VR camera
 
-When a headset is active, the panels start closed (`Esc` still opens them) and Zetori gives you a camera tablet you can hold in the game. Other players cannot see it. The desktop window shows what the camera sees, including the tablet when it is in view.
+When a headset is active, the panels start closed (`Esc` still opens them) and Zetori gives you a camera tablet you can hold in the game. It rises in front of you shortly after the game opens. Its accents and lit buttons follow the panel theme. Other players cannot see it. The desktop window shows what the camera sees, including the tablet when it is in view.
 
 | VR input | Action |
 | --- | --- |
@@ -51,6 +51,7 @@ When a headset is active, the panels start closed (`Esc` still opens them) and Z
 | Touch `FIRST`, `THIRD`, `FOLLOW` or `HAND` beside the screen | Choose First Person, Third Person, Follower or Handheld; the tablet disappears while following you |
 | Touch `FOV -` or `FOV +` under the screen | Change the field of view in steps of 5, from 30 to 130 |
 | Touch the flip button under the screen (Handheld) | Switch between the rear view and the view from the screen side |
+| Touch `COSMETICS` right of the flip button (First Person) | Show or hide your own face and cosmetics in the first-person view; the button is lit while they are shown |
 
 ## Controls
 

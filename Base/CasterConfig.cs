@@ -23,6 +23,7 @@ namespace Zetori.Base
 
         internal static ConfigEntry<CameraMode> ActiveCameraMode = null!;
         internal static ConfigEntry<VrCameraMode> VrMode = null!;
+        internal static ConfigEntry<bool> VrFirstPersonCosmetics = null!;
         internal static ConfigEntry<float> FieldOfView = null!;
         internal static ConfigEntry<float> NearClipPlane = null!;
         internal static ConfigEntry<bool> AudioListener = null!;
@@ -144,6 +145,7 @@ namespace Zetori.Base
 
             ActiveCameraMode = config.Bind("Camera", "Mode", CameraMode.Spectator, "Default shows your own first person view, Spectator follows the selected player, Freecam flies the camera on its own, Web watches the action from placed nodes.");
             VrMode = config.Bind("VR Camera", "Mode", VrCameraMode.Handheld, "What the in-game VR camera shows: FirstPerson, ThirdPerson, Follower or Handheld.");
+            VrFirstPersonCosmetics = config.Bind("VR Camera", "First Person Cosmetics", true, "Whether the in-game VR camera shows your own cosmetics in first person.");
             FieldOfView = Range(config, "Camera", "Field Of View", 100f, 10f, 130f);
             NearClipPlane = Range(config, "Camera", "Near Clip", 0.01f, 0.01f, 0.99f);
             AudioListener = config.Bind("Camera", "Audio Listener", true, "Hear the game from the spectator camera.");

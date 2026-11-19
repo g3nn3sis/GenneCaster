@@ -19,9 +19,9 @@ namespace Zetori.GameCamera.Vr
         private const int PreviewWidth = 640;
         private const int PreviewHeight = 360;
         private const int PreviewDepthBits = 16;
-        private const float PreviewInterval = 1f / 30f;
         private const float PreviewRange = 6f;
         private const float LabelFontSize = 0.09f;
+        private const float MinimumLabelFontSize = 0.04f;
         private const string DepthPass = "DepthOnly";
         private const string RenderTypeTag = "RenderType";
         private const string TransparentRenderType = "Transparent";
@@ -52,13 +52,17 @@ namespace Zetori.GameCamera.Vr
         private readonly Camera previewCamera;
         private readonly RenderTexture previewTexture;
         private Texture2D? bodyTexture;
+        private VrCameraBodyTint bodyTint = null!;
+        private Color32? shownAccent;
         private Renderer screenRenderer = null!;
         private Material idleButton = null!;
         private Material activeButton = null!;
         private Renderer flipIcon = null!;
         private Material flipAvailable = null!;
         private Material flipUnavailable = null!;
+        private TextMeshPro cosmeticsLabel = null!;
         private VrCameraMode? shownMode;
+        private bool? shownCosmetics;
         private bool lensFlipped;
         private bool screenHidden;
         private bool blending;
@@ -70,7 +74,6 @@ namespace Zetori.GameCamera.Vr
         private float opaqueDepthWrite;
         private int opaqueRenderQueue;
         private string opaqueRenderType = string.Empty;
-        private float nextPreview;
 
         internal Transform Root => root.transform;
         internal Transform Lens { get; private set; } = null!;
@@ -78,6 +81,7 @@ namespace Zetori.GameCamera.Vr
         internal VrCameraButton FieldOfViewDown { get; private set; } = null!;
         internal VrCameraButton FieldOfViewUp { get; private set; } = null!;
         internal VrCameraButton FlipButton { get; private set; } = null!;
+        internal VrCameraButton CosmeticsButton { get; private set; } = null!;
 
         private VrCameraModel(Camera source)
         {
@@ -167,6 +171,33 @@ namespace Zetori.GameCamera.Vr
                 ModeButtons[i].Renderer.sharedMaterial = i == (int)mode ? activeButton : idleButton;
             flipIcon.sharedMaterial = mode == VrCameraMode.Handheld ? flipAvailable : flipUnavailable;
             ApplyLens();
+            ApplyCosmeticsLabel();
+        }
+
+        internal void SetAccent(Color32 accent)
+        {
+            if (shownAccent is Color32 shown && shown.r == accent.r && shown.g == accent.g && shown.b == accent.b) return;
+            shownAccent = accent;
+            int index = materials.IndexOf(activeButton);
+            Color color = accent;
+            materialColors[index] = color;
+            color.a = shownFade;
+            UberShader.BaseColor.SetValue(activeButton, color);
+            bodyTint.Apply(accent);
+        }
+
+        internal void SetCosmeticsShown(bool shown)
+        {
+            if (shownCosmetics == shown) return;
+            shownCosmetics = shown;
+            CosmeticsButton.Renderer.sharedMaterial = shown ? activeButton : idleButton;
+        }
+
+        private void ApplyCosmeticsLabel()
+        {
+            Color color = shownMode == VrCameraMode.FirstPerson ? Color.white : FlipUnavailableColor;
+            color.a = cosmeticsLabel.alpha;
+            cosmeticsLabel.color = color;
         }
 
         internal void FlipLens()
@@ -182,14 +213,12 @@ namespace Zetori.GameCamera.Vr
             Lens.localRotation = facesScreenSide ? ScreenLensRotation : Quaternion.identity;
         }
 
-        internal void UpdatePreview(Vector3 position, Quaternion rotation, float fieldOfView, float viewerDistance, float scale)
+        internal void UpdatePreview(Vector3 position, Quaternion rotation, float fieldOfView, int cullingMask, float viewerDistance, float scale)
         {
             previewCamera.transform.SetPositionAndRotation(position, rotation);
             previewCamera.fieldOfView = fieldOfView;
-            float now = Time.unscaledTime;
-            bool due = now >= nextPreview && viewerDistance <= PreviewRange * scale;
-            if (due) nextPreview = now + PreviewInterval;
-            previewCamera.enabled = due;
+            previewCamera.cullingMask = cullingMask;
+            previewCamera.enabled = viewerDistance <= PreviewRange * scale;
         }
 
         private void Build()
@@ -199,6 +228,7 @@ namespace Zetori.GameCamera.Vr
             foreach (VrCameraMeshPart part in parts.Values) meshes.Add(part.Mesh);
             bodyTexture = AssetManager.LoadTexture(TextureResource, true) ?? throw new FileNotFoundException("The VR camera texture is missing.", TextureResource);
 
+            bodyTint = new VrCameraBodyTint(bodyTexture);
             idleButton = CreateMaterial(ButtonColor, ButtonDrawOrder);
             activeButton = CreateMaterial(UI.ColorSpace.Current.Color, ButtonDrawOrder);
             Place(parts["body"], "body", CreateTexturedMaterial(bodyTexture, 0), root.transform);
@@ -213,6 +243,11 @@ namespace Zetori.GameCamera.Vr
             };
             FieldOfViewDown = Button(parts, "button_fovdown", "FOV -");
             FieldOfViewUp = Button(parts, "button_fovup", "FOV +");
+            CosmeticsButton = Button(parts, "button_cosmetics", "COSMETICS");
+            cosmeticsLabel = CosmeticsButton.Renderer.GetComponentInChildren<TextMeshPro>();
+            cosmeticsLabel.enableAutoSizing = true;
+            cosmeticsLabel.fontSizeMin = MinimumLabelFontSize;
+            cosmeticsLabel.fontSizeMax = LabelFontSize;
 
             var lens = new GameObject("lens");
             lens.transform.SetParent(root.transform, false);

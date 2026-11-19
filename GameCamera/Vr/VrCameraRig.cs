@@ -15,6 +15,8 @@ namespace Zetori.GameCamera.Vr
         private const float SummonWindow = 0.4f;
         private const float SummonDistance = 0.55f;
         private const float SummonDrop = 0.08f;
+        private const float StartupSummonDelay = 1.5f;
+        private const float TrackingNotStarted = -1f;
         private const float RiseSeconds = 0.65f;
         private const float FadeInSeconds = 0.4f;
         private const float FadeOutSeconds = 0.3f;
@@ -37,9 +39,12 @@ namespace Zetori.GameCamera.Vr
         private readonly VrCameraHand leftHand = new VrCameraHand(true);
         private readonly VrCameraHand rightHand = new VrCameraHand(false);
         private readonly VrCameraView view = new VrCameraView();
+        private readonly VrCameraCosmetics cosmetics = new VrCameraCosmetics();
         private VrCameraModel? model;
         private VrCameraHand? holder;
         private bool deployed;
+        private bool startupSummonHandled;
+        private float trackingStartedAt = TrackingNotStarted;
         private float fade;
         private float riseProgress = 1f;
         private Vector3 riseStart;
@@ -55,6 +60,12 @@ namespace Zetori.GameCamera.Vr
         {
             get => CasterConfig.VrMode.Value;
             set => CasterConfig.VrMode.Value = value;
+        }
+
+        private static bool CosmeticsShown
+        {
+            get => CasterConfig.VrFirstPersonCosmetics.Value;
+            set => CasterConfig.VrFirstPersonCosmetics.Value = value;
         }
 
         private bool TabletVisible => deployed && Mode != VrCameraMode.Follower;
@@ -90,19 +101,22 @@ namespace Zetori.GameCamera.Vr
             Pose head = HeadView.Eyes(tagger.offlineVRRig);
 
             if (summonPress.Update(input.rightControllerPrimaryButton, now)) ToggleTablet(tagger, output, head, scale);
+            else SummonOnStartup(tagger, output, head, scale, now);
             if (model != null) UpdateTablet(tagger, model, head, scale, now, deltaTime);
 
             AimView(head, player.headCollider.transform.parent, scale, deltaTime);
             output.SetPose(view.Position, view.Rotation);
+            cosmetics.Apply(output.Camera, Mode == VrCameraMode.FirstPerson, CosmeticsShown);
             if (model != null && fade > 0f)
             {
                 float viewerDistance = Vector3.Distance(head.position, model.Root.position);
-                model.UpdatePreview(view.Position, view.Rotation, CameraManager.fieldOfView, viewerDistance, scale);
+                model.UpdatePreview(view.Position, view.Rotation, CameraManager.fieldOfView, output.Camera.cullingMask, viewerDistance, scale);
             }
         }
 
         internal void Hide()
         {
+            cosmetics.Restore();
             model?.Hide();
             holder = null;
             fade = 0f;
@@ -116,8 +130,22 @@ namespace Zetori.GameCamera.Vr
             riseProgress = 1f;
         }
 
+        private void SummonOnStartup(GorillaTagger tagger, CameraWrapper output, Pose head, float scale, float now)
+        {
+            if (startupSummonHandled || tagger.mainCamera == null) return;
+            if (trackingStartedAt == TrackingNotStarted)
+            {
+                if (tagger.mainCamera.transform.localPosition != Vector3.zero) trackingStartedAt = now;
+                return;
+            }
+            if (now - trackingStartedAt < StartupSummonDelay) return;
+            startupSummonHandled = true;
+            Summon(tagger, output, head, scale);
+        }
+
         private void ToggleTablet(GorillaTagger tagger, CameraWrapper output, Pose head, float scale)
         {
+            startupSummonHandled = true;
             if (TabletVisible) Dismiss(tagger);
             else Summon(tagger, output, head, scale);
         }
@@ -133,6 +161,7 @@ namespace Zetori.GameCamera.Vr
         private void UpdateTablet(GorillaTagger tagger, VrCameraModel camera, Pose head, float scale, float now, float deltaTime)
         {
             camera.SetScale(scale);
+            camera.SetAccent(UI.ColorSpace.Current.Color);
             camera.SetMode(Mode);
             if (TabletInteractive)
             {
@@ -140,6 +169,7 @@ namespace Zetori.GameCamera.Vr
                 UpdateButtons(tagger, camera, now);
                 camera.SetMode(Mode);
             }
+            camera.SetCosmeticsShown(CosmeticsShown);
             bool visible = TabletVisible;
             if (!visible) holder = null;
             fade = Mathf.MoveTowards(fade, visible ? 1f : 0f, deltaTime / (visible ? FadeInSeconds : FadeOutSeconds));
@@ -220,6 +250,7 @@ namespace Zetori.GameCamera.Vr
                 camera.FlipLens();
                 view.Invalidate();
             }
+            if (Pressed(tagger, camera.CosmeticsButton, now) && Mode == VrCameraMode.FirstPerson) CosmeticsShown = !CosmeticsShown;
             VrCameraButton[] modeButtons = camera.ModeButtons;
             for (int i = 0; i < modeButtons.Length; i++)
                 if (Pressed(tagger, modeButtons[i], now)) SelectMode((VrCameraMode)i);
@@ -286,6 +317,7 @@ namespace Zetori.GameCamera.Vr
 
         public void Dispose()
         {
+            cosmetics.Restore();
             model?.Dispose();
             model = null;
         }
