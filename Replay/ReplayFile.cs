@@ -16,7 +16,8 @@ namespace Zetori.Replay
         private const string Extension = ".gcreplay";
         private const string TemporaryExtension = ".tmp";
         private const uint Magic = 0x50524347;
-        private const int FormatVersion = 7;
+        private const int FormatVersion = 9;
+        private const int LastVersionWithoutCosmetics = 7;
 
         internal static string NewName() => DateTime.Now.ToString("yyyy-MM-dd HH-mm-ss", CultureInfo.InvariantCulture);
 
@@ -127,16 +128,18 @@ namespace Zetori.Replay
             writer.Write(actor.IsLocal);
             writer.Write(actor.Platform);
             actor.Skeleton.Write(writer);
+            actor.WriteCosmetics(writer);
             writer.Write(actor.Frames.Count);
-            foreach (ActorFrame frame in actor.Frames) frame.Write(writer);
+            foreach (ActorFrame frame in actor.Frames) frame.Write(writer, actor);
             actor.Voice.Write(writer);
+            actor.WriteSounds(writer);
         }
 
         private static ReplayRecording Read(BinaryReader reader)
         {
             if (reader.ReadUInt32() != Magic) throw new InvalidDataException("Not a Zetori replay.");
             int version = reader.ReadInt32();
-            if (version != FormatVersion) throw new InvalidDataException($"Replay format {version} is from another Zetori version and cannot be played; record it again.");
+            if (version != FormatVersion && version != LastVersionWithoutCosmetics) throw new InvalidDataException($"Replay format {version} is from another Zetori version and cannot be played; record it again.");
             var recording = new ReplayRecording { Duration = reader.ReadSingle() };
             int environments = ReplayIO.ReadCount(reader);
             for (int i = 0; i < environments; i++)
@@ -145,21 +148,25 @@ namespace Zetori.Replay
             for (int i = 0; i < events; i++)
                 recording.Events.Add(new ReplayEvent(reader.ReadSingle(), (ReplayEventKind)reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32()));
             int actors = ReplayIO.ReadCount(reader);
-            for (int i = 0; i < actors; i++) recording.Actors.Add(ReadActor(reader, i));
+            bool hasCosmetics = version == FormatVersion;
+            for (int i = 0; i < actors; i++) recording.Actors.Add(ReadActor(reader, i, hasCosmetics));
             return recording;
         }
 
-        private static ReplayActor ReadActor(BinaryReader reader, int id)
+        private static ReplayActor ReadActor(BinaryReader reader, int id, bool hasCosmetics)
         {
             string name = reader.ReadString();
             var color = new Color(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
             bool isLocal = reader.ReadBoolean();
             int platform = reader.ReadInt32();
             var actor = new ReplayActor(id, name, color, RigSkeleton.Read(reader), isLocal) { Platform = platform };
+            if (hasCosmetics) actor.ReadCosmetics(reader);
             int frames = ReplayIO.ReadCount(reader);
             actor.Frames.Capacity = frames;
-            for (int i = 0; i < frames; i++) actor.Frames.Add(ActorFrame.Read(reader, actor.Skeleton));
+            var scratch = new List<CosmeticNodeChange>();
+            for (int i = 0; i < frames; i++) actor.Frames.Add(ActorFrame.Read(reader, actor, hasCosmetics, scratch));
             actor.Voice.Read(reader);
+            if (hasCosmetics) actor.ReadSounds(reader);
             return actor;
         }
     }

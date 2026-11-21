@@ -17,6 +17,7 @@ namespace Zetori.Replay
 
         private readonly List<ReplayPuppet> puppets;
         private readonly LiveWorldMask mask = new LiveWorldMask();
+        private readonly CosmeticLibrary cosmetics = new CosmeticLibrary();
         private readonly TimeManager.Snapshot? liveEnvironment;
         private EnvironmentState? appliedEnvironment;
         private int spectated;
@@ -48,12 +49,12 @@ namespace Zetori.Replay
         internal ReplayPlayer(ReplayRecording recording)
         {
             Recording = recording;
-            puppets = BuildPuppets(recording);
+            puppets = BuildPuppets(recording, cosmetics);
             RigLerp = NetworkedPlayerManager.LiveRigLerp;
             liveEnvironment = TimeManager.Capture();
         }
 
-        private static List<ReplayPuppet> BuildPuppets(ReplayRecording recording)
+        private static List<ReplayPuppet> BuildPuppets(ReplayRecording recording, CosmeticLibrary cosmetics)
         {
             var built = new List<ReplayPuppet>(recording.Actors.Count);
             foreach (ReplayActor actor in recording.Actors)
@@ -64,7 +65,7 @@ namespace Zetori.Replay
                     Log.Warning($"Replay: {actor.Name}'s body could not be rebuilt and is skipped.");
                     continue;
                 }
-                built.Add(new ReplayPuppet(actor, appearance));
+                built.Add(new ReplayPuppet(actor, appearance, cosmetics));
             }
             return built;
         }
@@ -85,7 +86,7 @@ namespace Zetori.Replay
             posedCursor = Cursor;
             foreach (ReplayPuppet puppet in puppets)
             {
-                puppet.Pose(Cursor, step, RigLerp, ArmExaggeration.Active && IsSpectating(puppet));
+                puppet.Pose(Cursor, step, RigLerp, ArmExaggeration.Active && IsSpectating(puppet), Playing);
                 puppet.UpdateVoice(Cursor, Playing);
             }
             ApplyEnvironment();
@@ -169,6 +170,7 @@ namespace Zetori.Replay
         {
             foreach (ReplayPuppet puppet in puppets) puppet.Dispose();
             puppets.Clear();
+            cosmetics.Dispose();
             mask.Dispose();
             if (liveEnvironment != null) TimeManager.Restore(liveEnvironment);
         }

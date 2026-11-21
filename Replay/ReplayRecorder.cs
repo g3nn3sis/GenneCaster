@@ -20,6 +20,7 @@ namespace Zetori.Replay
             internal VRRig Rig = null!;
             internal Transform[] Joints = Array.Empty<Transform>();
             internal ReplayActor Actor = null!;
+            internal CosmeticCapture Cosmetics = null!;
             internal VoiceTap? Tap;
             internal bool Tagged;
         }
@@ -119,6 +120,7 @@ namespace Zetori.Replay
                 Rig = rig,
                 Joints = joints,
                 Actor = actor,
+                Cosmetics = new CosmeticCapture(rig, actor, joints),
                 Tap = voice != null ? voice.gameObject.AddComponent<VoiceTap>() : null,
                 Tagged = RigTagState.Of(rig) != ReplayTagState.None,
             };
@@ -151,6 +153,8 @@ namespace Zetori.Replay
             Transform root = rig.transform;
             Quaternion inverseRoot = Quaternion.Inverse(root.rotation);
             Pose eyes = HeadView.Eyes(rig);
+            CosmeticPose[] cosmetics = CaptureCosmetics(binding);
+            int skin = CaptureSkin(binding);
             var frame = new ActorFrame
             {
                 Time = now,
@@ -173,6 +177,8 @@ namespace Zetori.Replay
                 Material = rig.setMatIndex,
                 Fps = Mathf.RoundToInt(NetworkedPlayerManager.GetFPS(rig)),
                 Tag = RigTagState.Of(rig),
+                Cosmetics = cosmetics,
+                Skin = skin,
             };
             for (int i = 0; i < skeleton.JointCount; i++)
             {
@@ -185,6 +191,26 @@ namespace Zetori.Replay
             binding.Actor.Frames.Add(frame);
             if (!rig.isOfflineVRRig && binding.Actor.Platform == 0) binding.Actor.Platform = NetworkedPlayerManager.GetPlatform(rig);
             DetectTag(binding, frame.Tag, now);
+        }
+
+        private static CosmeticPose[] CaptureCosmetics(Binding binding)
+        {
+            try { return binding.Cosmetics.Capture(); }
+            catch (Exception e)
+            {
+                Log.ExceptionOnce($"replay-cosmetics-{binding.Actor.Id}", e, "Recording a player's cosmetics failed");
+                return Array.Empty<CosmeticPose>();
+            }
+        }
+
+        private static int CaptureSkin(Binding binding)
+        {
+            try { return binding.Cosmetics.CaptureSkin(); }
+            catch (Exception e)
+            {
+                Log.ExceptionOnce($"replay-skin-{binding.Actor.Id}", e, "Recording a player's skin failed");
+                return RecordedSkin.None;
+            }
         }
 
         private static LimbSample CaptureLimb(VRMap? map, bool local, Transform root)
@@ -216,10 +242,19 @@ namespace Zetori.Replay
             int sampleRate = AudioSettings.outputSampleRate;
             foreach (Binding binding in bindings.Values)
             {
-                if (binding.Tap == null) continue;
-                int count = binding.Tap.Drain(ref voiceBuffer);
-                binding.Actor.Voice.Append(audioNow, voiceBuffer, count, sampleRate);
+                if (binding.Tap != null)
+                {
+                    int count = binding.Tap.Drain(ref voiceBuffer);
+                    binding.Actor.Voice.Append(audioNow, voiceBuffer, count, sampleRate);
+                }
+                DrainCosmeticSounds(binding, audioNow, sampleRate);
             }
+        }
+
+        private void DrainCosmeticSounds(Binding binding, float audioNow, int sampleRate)
+        {
+            try { binding.Cosmetics.Drain(audioNow, ref voiceBuffer, sampleRate); }
+            catch (Exception e) { Log.ExceptionOnce($"replay-cosmetic-sound-{binding.Actor.Id}", e, "Recording a player's cosmetic sounds failed"); }
         }
 
         private void Release(string key, float now, bool announce)
@@ -228,6 +263,7 @@ namespace Zetori.Replay
             bindings.Remove(key);
             binding.Actor.Voice.Close();
             if (binding.Tap != null) UnityEngine.Object.Destroy(binding.Tap);
+            binding.Cosmetics.Dispose();
             if (announce) recording.Events.Add(new ReplayEvent(now, ReplayEventKind.Left, binding.Actor.Id));
         }
     }

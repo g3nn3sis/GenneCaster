@@ -4,5 +4,5 @@
 
 namespace Zetori.GameCamera
 {
-    internal enum CameraMode { Default, Spectator, Freecam, Web }
+    internal enum CameraMode { Default, Spectator, Freecam, Web, Camera }
 }

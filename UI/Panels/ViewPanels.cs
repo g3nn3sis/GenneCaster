@@ -6,6 +6,7 @@ using Zetori.Base;
 using Zetori.Game;
 using Zetori.GameCamera;
 using Zetori.GameCamera.Modes;
+using Zetori.GameCamera.Vr;
 using Zetori.Player;
 using UnityEngine;
 
@@ -26,6 +27,7 @@ namespace Zetori.UI.Panels
                 panel.Button("Freecam", () => CameraManager.mode = CameraMode.Freecam, CameraManager.mode != CameraMode.Freecam);
                 panel.Button("Web", () => CameraManager.mode = CameraMode.Web, CameraManager.mode != CameraMode.Web);
             });
+            panel.Button("Camera", () => CameraManager.mode = CameraMode.Camera, CameraManager.mode != CameraMode.Camera && VrCameraRig.HeadsetActive);
             if (CameraManager.mode == CameraMode.Freecam || WebCamera.Editing) DrawFlightSpeeds(panel);
             DrawLens(panel);
             DrawFollow(panel);

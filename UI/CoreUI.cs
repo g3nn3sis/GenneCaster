@@ -3,6 +3,7 @@
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
 using Zetori.Base;
+using Zetori.GameCamera;
 using Zetori.GameCamera.Vr;
 using Zetori.Replay;
 using UnityEngine;
@@ -45,6 +46,8 @@ namespace Zetori.UI
             if (inVr) vrDefaultApplied = true;
             else desktopDefaultApplied = true;
             if (Presets.LoadDefault(inVr ? PresetPlatform.Vr : PresetPlatform.Desktop)) orchestrator.ReapplyFromConfig();
+            else if (inVr) CameraManager.mode = CameraMode.Camera;
+            else if (CameraManager.mode == CameraMode.Camera) CameraManager.mode = CameraMode.Spectator;
         }
 
         private void ClosePanelsOnEnteringVr()

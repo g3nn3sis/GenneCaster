@@ -41,6 +41,13 @@ namespace Zetori.GameCamera.Vr
         private static readonly Vector2 LabelSize = new Vector2(0.05f, 0.03f);
         private static readonly Color ButtonColor = new Color(0.2f, 0.22f, 0.26f);
         private static readonly Color FlipUnavailableColor = new Color(0.38f, 0.4f, 0.44f);
+        private static readonly int BaseColorProperty = Shader.PropertyToID("_BaseColor");
+        private static readonly int BaseMapProperty = Shader.PropertyToID("_BaseMap");
+        private static readonly int SourceBlendProperty = Shader.PropertyToID("_SrcBlend");
+        private static readonly int DestinationBlendProperty = Shader.PropertyToID("_DstBlend");
+        private static readonly int SourceAlphaBlendProperty = Shader.PropertyToID("_SrcBlendAlpha");
+        private static readonly int DestinationAlphaBlendProperty = Shader.PropertyToID("_DstBlendAlpha");
+        private static readonly int DepthWriteProperty = Shader.PropertyToID("_ZWrite");
 
         private readonly List<Material> materials = new List<Material>();
         private readonly List<Color> materialColors = new List<Color>();
@@ -145,7 +152,7 @@ namespace Zetori.GameCamera.Vr
                 if (blend != blending) ApplyBlending(materials[i], materialDrawOrders[i], blend);
                 Color color = materialColors[i];
                 color.a = fade;
-                UberShader.BaseColor.SetValue(materials[i], color);
+                materials[i].SetColor(BaseColorProperty, color);
             }
             blending = blend;
             foreach (TextMeshPro label in labels) label.alpha = fade;
@@ -153,11 +160,11 @@ namespace Zetori.GameCamera.Vr
 
         private void ApplyBlending(Material material, int drawOrder, bool blend)
         {
-            material.SetFloat(UberShader.SrcBlend.nameID, blend ? (float)BlendMode.SrcAlpha : opaqueSourceBlend);
-            material.SetFloat(UberShader.DstBlend.nameID, blend ? (float)BlendMode.OneMinusSrcAlpha : opaqueDestinationBlend);
-            material.SetFloat(UberShader.SrcBlendAlpha.nameID, blend ? (float)BlendMode.One : opaqueSourceAlphaBlend);
-            material.SetFloat(UberShader.DstBlendAlpha.nameID, blend ? (float)BlendMode.OneMinusSrcAlpha : opaqueDestinationAlphaBlend);
-            material.SetFloat(UberShader.ZWrite.nameID, blend ? 0f : opaqueDepthWrite);
+            material.SetFloat(SourceBlendProperty, blend ? (float)BlendMode.SrcAlpha : opaqueSourceBlend);
+            material.SetFloat(DestinationBlendProperty, blend ? (float)BlendMode.OneMinusSrcAlpha : opaqueDestinationBlend);
+            material.SetFloat(SourceAlphaBlendProperty, blend ? (float)BlendMode.One : opaqueSourceAlphaBlend);
+            material.SetFloat(DestinationAlphaBlendProperty, blend ? (float)BlendMode.OneMinusSrcAlpha : opaqueDestinationAlphaBlend);
+            material.SetFloat(DepthWriteProperty, blend ? 0f : opaqueDepthWrite);
             material.SetOverrideTag(RenderTypeTag, blend ? TransparentRenderType : opaqueRenderType);
             material.SetShaderPassEnabled(DepthPass, !blend);
             material.renderQueue = blend ? (int)RenderQueue.Transparent + drawOrder : opaqueRenderQueue;
@@ -182,7 +189,7 @@ namespace Zetori.GameCamera.Vr
             Color color = accent;
             materialColors[index] = color;
             color.a = shownFade;
-            UberShader.BaseColor.SetValue(activeButton, color);
+            activeButton.SetColor(BaseColorProperty, color);
             bodyTint.Apply(accent);
         }
 
@@ -314,19 +321,19 @@ namespace Zetori.GameCamera.Vr
         {
             Material material = CreateMaterial(Color.white, drawOrder);
             material.EnableKeyword(TextureKeyword);
-            UberShader.BaseMap.SetValue(material, texture);
+            material.SetTexture(BaseMapProperty, texture);
             return material;
         }
 
         private Material CreateMaterial(Color color, int drawOrder)
         {
             var material = new Material(UberShader.ReferenceMaterial);
-            UberShader.BaseColor.SetValue(material, color);
-            opaqueSourceBlend = material.GetFloat(UberShader.SrcBlend.nameID);
-            opaqueDestinationBlend = material.GetFloat(UberShader.DstBlend.nameID);
-            opaqueSourceAlphaBlend = material.GetFloat(UberShader.SrcBlendAlpha.nameID);
-            opaqueDestinationAlphaBlend = material.GetFloat(UberShader.DstBlendAlpha.nameID);
-            opaqueDepthWrite = material.GetFloat(UberShader.ZWrite.nameID);
+            material.SetColor(BaseColorProperty, color);
+            opaqueSourceBlend = material.GetFloat(SourceBlendProperty);
+            opaqueDestinationBlend = material.GetFloat(DestinationBlendProperty);
+            opaqueSourceAlphaBlend = material.GetFloat(SourceAlphaBlendProperty);
+            opaqueDestinationAlphaBlend = material.GetFloat(DestinationAlphaBlendProperty);
+            opaqueDepthWrite = material.GetFloat(DepthWriteProperty);
             opaqueRenderQueue = material.renderQueue;
             opaqueRenderType = material.GetTag(RenderTypeTag, false);
             materials.Add(material);

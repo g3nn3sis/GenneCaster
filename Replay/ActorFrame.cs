@@ -24,8 +24,10 @@ namespace Zetori.Replay
         internal int Material;
         internal int Fps;
         internal ReplayTagState Tag;
+        internal CosmeticPose[] Cosmetics;
+        internal int Skin;
 
-        internal void Write(BinaryWriter writer)
+        internal void Write(BinaryWriter writer, ReplayActor actor)
         {
             writer.Write(Time);
             ReplayIO.Write(writer, Position);
@@ -42,6 +44,9 @@ namespace Zetori.Replay
             writer.Write(Material);
             writer.Write((short)Mathf.Clamp(Fps, short.MinValue, short.MaxValue));
             writer.Write((byte)Tag);
+            writer.Write((short)Skin);
+            writer.Write(Cosmetics.Length);
+            foreach (CosmeticPose cosmetic in Cosmetics) cosmetic.Write(writer);
         }
 
         private static LimbSample[] ReadLimbs(BinaryReader reader)
@@ -51,8 +56,25 @@ namespace Zetori.Replay
             return limbs;
         }
 
-        internal static ActorFrame Read(BinaryReader reader, RigSkeleton skeleton)
+        private static int ReadSkin(BinaryReader reader, ReplayActor actor)
         {
+            int skin = reader.ReadInt16();
+            if (skin != RecordedSkin.None && (skin < 0 || skin >= actor.Skins.Count)) throw new InvalidDataException("Skin index out of range.");
+            return skin;
+        }
+
+        private static CosmeticPose[] ReadCosmetics(BinaryReader reader, ReplayActor actor, List<CosmeticNodeChange> scratch)
+        {
+            int count = ReplayIO.ReadCount(reader);
+            if (count == 0) return Array.Empty<CosmeticPose>();
+            var cosmetics = new CosmeticPose[count];
+            for (int i = 0; i < count; i++) cosmetics[i] = CosmeticPose.Read(reader, actor.Cosmetics, actor.Skeleton.JointCount, scratch);
+            return cosmetics;
+        }
+
+        internal static ActorFrame Read(BinaryReader reader, ReplayActor actor, bool hasCosmetics, List<CosmeticNodeChange> scratch)
+        {
+            RigSkeleton skeleton = actor.Skeleton;
             var frame = new ActorFrame
             {
                 Time = reader.ReadSingle(),
@@ -74,6 +96,8 @@ namespace Zetori.Replay
             frame.Material = reader.ReadInt32();
             frame.Fps = reader.ReadInt16();
             frame.Tag = (ReplayTagState)reader.ReadByte();
+            frame.Skin = hasCosmetics ? ReadSkin(reader, actor) : RecordedSkin.None;
+            frame.Cosmetics = hasCosmetics ? ReadCosmetics(reader, actor, scratch) : Array.Empty<CosmeticPose>();
             return frame;
         }
     }

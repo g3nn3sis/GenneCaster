@@ -106,6 +106,30 @@ namespace Zetori.Replay
         internal Transform ParentOf(Transform[] joints, Transform root, int index) =>
             Parents[index] == RootParent ? root : joints[Parents[index]];
 
+        internal Vector3 OffsetWithin(ActorFrame frame, int space, int joint)
+        {
+            Pose spacePose = PoseOf(frame, space, out float spaceScale);
+            Pose jointPose = PoseOf(frame, joint, out _);
+            if (Mathf.Approximately(spaceScale, 0f)) return Vector3.zero;
+            return Quaternion.Inverse(spacePose.rotation) * (jointPose.position - spacePose.position) / spaceScale;
+        }
+
+        private Pose PoseOf(ActorFrame frame, int joint, out float scale)
+        {
+            Vector3 position = Vector3.zero;
+            Quaternion rotation = Quaternion.identity;
+            scale = 1f;
+            for (int current = joint, depth = 0; current != RootParent && depth < JointCount; current = Parents[current], depth++)
+            {
+                Quaternion localRotation = frame.Joints[current].Unpack();
+                float localScale = Mathf.HalfToFloat(frame.JointScales[current]);
+                position = frame.JointPositions[current].Unpack() + localRotation * (position * localScale);
+                rotation = localRotation * rotation;
+                scale *= localScale;
+            }
+            return new Pose(position, rotation);
+        }
+
         internal void Write(BinaryWriter writer)
         {
             writer.Write(BodyMeshName);

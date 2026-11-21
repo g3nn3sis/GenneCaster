@@ -29,13 +29,14 @@ namespace Zetori.GameCamera
         {
             if (FliesCamera && GorillaController.wasd) GorillaController.wasd = false;
             if (!EnsureCamera()) return;
-            if (VrCameraRig.HeadsetActive)
+            bool listens = audioListener && !HeadsetHearsGame;
+            if (RunsVrCamera)
             {
-                RunVr(camera!);
+                RunVr(camera!, listens);
                 return;
             }
-            vrRig?.Hide();
-            camera!.Apply(fieldOfView, nearClipPlane, audioListener);
+            FadeVrCamera();
+            camera!.Apply(fieldOfView, nearClipPlane, listens);
             SwitchMode(camera);
             switch (runningMode)
             {
@@ -43,6 +44,18 @@ namespace Zetori.GameCamera
                 case CameraMode.Freecam: RunFreecam(camera); break;
                 case CameraMode.Web: RunWeb(camera); break;
                 default: RunSpectator(camera); break;
+            }
+        }
+
+        private static bool RunsVrCamera => VrCameraRig.HeadsetActive && ActiveMode == CameraMode.Camera;
+
+        private bool HeadsetHearsGame
+        {
+            get
+            {
+                if (!VrCameraRig.HeadsetActive) return false;
+                vrRig ??= new VrCameraRig();
+                return vrRig.HeadsetHearsGame;
             }
         }
 
@@ -56,13 +69,19 @@ namespace Zetori.GameCamera
             else mode = CameraMode.Web;
         }
 
-        private void RunVr(CameraWrapper camera)
+        private void RunVr(CameraWrapper camera, bool listens)
         {
             LeaveDesktopMode();
             vrRig ??= new VrCameraRig();
-            camera.Apply(fieldOfView, nearClipPlane, audioListener && !vrRig.HeadsetHearsGame);
+            camera.Apply(fieldOfView, nearClipPlane, listens);
             try { vrRig.Tick(camera); }
             catch (Exception e) { Log.ExceptionOnce("vr-camera", e, "Updating the VR camera failed"); }
+        }
+
+        private void FadeVrCamera()
+        {
+            try { vrRig?.FadeAway(); }
+            catch (Exception e) { Log.ExceptionOnce("vr-camera-fade", e, "Fading out the VR camera failed"); }
         }
 
         private void LeaveDesktopMode()

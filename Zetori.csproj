@@ -53,6 +53,9 @@
 		<Reference Include="PhotonUnityNetworking" HintPath="$(GameAssemblyPath)\PhotonUnityNetworking.dll" />
 
 		<!-- Unity packages -->
+		<!-- Addressables load other players' cosmetics for replay playback -->
+		<Reference Include="Unity.Addressables" HintPath="$(GameAssemblyPath)\Unity.Addressables.dll" />
+		<Reference Include="Unity.ResourceManager" HintPath="$(GameAssemblyPath)\Unity.ResourceManager.dll" />
 		<Reference Include="Unity.Cinemachine" HintPath="$(GameAssemblyPath)\Unity.Cinemachine.dll" />
 		<!-- Transitively required: game/TMP method signatures expose Unity.Collections.NativeList<> -->
 		<Reference Include="Unity.Collections" HintPath="$(GameAssemblyPath)\Unity.Collections.dll" />
@@ -64,6 +67,7 @@
 		<Reference Include="UnityEngine.CoreModule" HintPath="$(GameAssemblyPath)\UnityEngine.CoreModule.dll" />
 		<Reference Include="UnityEngine.IMGUIModule" HintPath="$(GameAssemblyPath)\UnityEngine.IMGUIModule.dll" />
 		<Reference Include="UnityEngine.ParticleSystemModule" HintPath="$(GameAssemblyPath)\UnityEngine.ParticleSystemModule.dll" />
+		<Reference Include="UnityEngine.ClothModule" HintPath="$(GameAssemblyPath)\UnityEngine.ClothModule.dll" />
 		<Reference Include="UnityEngine.AudioModule" HintPath="$(GameAssemblyPath)\UnityEngine.AudioModule.dll" />
 		<Reference Include="UnityEngine.PhysicsModule" HintPath="$(GameAssemblyPath)\UnityEngine.PhysicsModule.dll" />
 		<Reference Include="UnityEngine.AssetBundleModule" HintPath="$(GameAssemblyPath)\UnityEngine.AssetBundleModule.dll" />

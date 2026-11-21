@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Zetori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
+using System.IO;
 using UnityEngine;
 
 namespace Zetori.Replay
@@ -9,6 +10,12 @@ namespace Zetori.Replay
     internal sealed class ReplayActor
     {
         private const float MaxFrameGapFactor = 3f;
+
+        private readonly List<RecordedCosmetic> cosmetics = new List<RecordedCosmetic>();
+        private readonly Dictionary<CosmeticKey, int> cosmeticIndices = new Dictionary<CosmeticKey, int>();
+        private readonly List<RecordedSkin> skins = new List<RecordedSkin>();
+        private readonly Dictionary<RecordedSkin, int> skinIndices = new Dictionary<RecordedSkin, int>();
+        private readonly List<CosmeticSoundTrack> sounds = new List<CosmeticSoundTrack>();
 
         internal int Id { get; }
         internal string Name { get; }
@@ -18,6 +25,9 @@ namespace Zetori.Replay
         internal VoiceTrack Voice { get; } = new VoiceTrack();
         internal bool IsLocal { get; }
         internal int Platform { get; set; }
+        internal IReadOnlyList<RecordedCosmetic> Cosmetics => cosmetics;
+        internal IReadOnlyList<RecordedSkin> Skins => skins;
+        internal IReadOnlyList<CosmeticSoundTrack> Sounds => sounds;
 
         internal ReplayActor(int id, string name, Color color, RigSkeleton skeleton, bool isLocal)
         {
@@ -26,6 +36,69 @@ namespace Zetori.Replay
             Color = color;
             Skeleton = skeleton;
             IsLocal = isLocal;
+        }
+
+        internal int CosmeticIndex(CosmeticKey key)
+        {
+            if (cosmeticIndices.TryGetValue(key, out int index)) return index;
+            index = cosmetics.Count;
+            cosmetics.Add(new RecordedCosmetic(key));
+            cosmeticIndices[key] = index;
+            return index;
+        }
+
+        internal int SkinIndex(RecordedSkin skin)
+        {
+            if (skinIndices.TryGetValue(skin, out int index)) return index;
+            if (skins.Count >= short.MaxValue) return RecordedSkin.None;
+            index = skins.Count;
+            skins.Add(skin);
+            skinIndices[skin] = index;
+            return index;
+        }
+
+        internal CosmeticSoundTrack SoundTrack(int cosmetic, int node, AudioSource source)
+        {
+            foreach (CosmeticSoundTrack existing in sounds)
+                if (existing.Cosmetic == cosmetic && existing.Node == node) return existing;
+            string mixer = source.outputAudioMixerGroup != null ? source.outputAudioMixerGroup.name : string.Empty;
+            var created = new CosmeticSoundTrack(cosmetic, node, VoiceSettings.From(source), mixer);
+            sounds.Add(created);
+            return created;
+        }
+
+        internal void WriteCosmetics(BinaryWriter writer)
+        {
+            writer.Write(cosmetics.Count);
+            foreach (RecordedCosmetic cosmetic in cosmetics) cosmetic.Write(writer);
+            writer.Write(skins.Count);
+            foreach (RecordedSkin skin in skins) skin.Write(writer);
+        }
+
+        internal void ReadCosmetics(BinaryReader reader)
+        {
+            int count = ReplayIO.ReadCount(reader);
+            for (int i = 0; i < count; i++)
+            {
+                RecordedCosmetic cosmetic = RecordedCosmetic.Read(reader);
+                cosmeticIndices[cosmetic.Key] = cosmetics.Count;
+                cosmetics.Add(cosmetic);
+            }
+            int skinCount = ReplayIO.ReadCount(reader);
+            if (skinCount > short.MaxValue) throw new InvalidDataException("Too many skins.");
+            for (int i = 0; i < skinCount; i++) skins.Add(RecordedSkin.Read(reader));
+        }
+
+        internal void WriteSounds(BinaryWriter writer)
+        {
+            writer.Write(sounds.Count);
+            foreach (CosmeticSoundTrack sound in sounds) sound.Write(writer);
+        }
+
+        internal void ReadSounds(BinaryReader reader)
+        {
+            int count = ReplayIO.ReadCount(reader);
+            for (int i = 0; i < count; i++) sounds.Add(CosmeticSoundTrack.Read(reader, cosmetics));
         }
 
         internal bool TryFindSpan(float time, float sampleInterval, out int index, out float blend)

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Zetori-Source-Available
 // Unauthorized use, modification, or distribution is prohibited. See LICENSE.
 
+using Zetori.Base;
 using Zetori.GameCamera;
 using Zetori.Player;
 using UnityEngine;
@@ -10,7 +11,6 @@ namespace Zetori.Replay
 {
     internal sealed class ReplayPuppet : IDisposable
     {
-        private const float VoiceResyncTolerance = 0.12f;
         private const float SnapStep = 0.5f;
         private const float MaxRootCorrection = 2f;
         private const float MaxLimbCorrection = 1f;
@@ -21,11 +21,12 @@ namespace Zetori.Replay
         private readonly Material[] bodyMaterials;
         private readonly MeshRenderer? head;
         private readonly Material[] headMaterials;
-        private readonly AudioSource voice;
+        private readonly TrackPlayer voice;
         private readonly RigAppearance appearance;
-        private VoiceSegment? playingSegment;
-        private AudioClip? clip;
+        private readonly PuppetCosmetics cosmetics;
+        private readonly PuppetSkins skins;
         private int appliedMaterial = -1;
+        private int appliedSkin = RecordedSkin.None;
         private Pose filteredRoot;
         private readonly Pose[] filteredLimbs = new Pose[LimbSample.Count];
         private readonly ArmSwing leftSwing = new ArmSwing();
@@ -39,7 +40,7 @@ namespace Zetori.Replay
         internal ActorFrame Current { get; private set; }
         internal bool Visible => root.activeSelf;
 
-        internal ReplayPuppet(ReplayActor actor, RigAppearance appearance)
+        internal ReplayPuppet(ReplayActor actor, RigAppearance appearance, CosmeticLibrary library)
         {
             Actor = actor;
             this.appearance = appearance;
@@ -54,11 +55,13 @@ namespace Zetori.Replay
                 ? Attach("Head", skeleton.HeadJoint, skeleton.Layer, appearance.HeadMesh, headMaterials)
                 : null;
             if (appearance.FaceMesh != null) Attach("Face", skeleton.FaceJoint, skeleton.Layer, appearance.FaceMesh, appearance.FaceMaterials);
-            voice = BuildVoice(skeleton, appearance, root.transform);
+            voice = new TrackPlayer(BuildVoice(skeleton, appearance, root.transform), $"Replay {actor.Name}");
+            cosmetics = new PuppetCosmetics(actor, root.transform, joints, skeleton.Layer, library);
+            skins = new PuppetSkins(actor, library);
             root.SetActive(false);
         }
 
-        internal void Pose(float time, float step, float rigLerp, bool exaggerateArms)
+        internal void Pose(float time, float step, float rigLerp, bool exaggerateArms, bool playing)
         {
             SetArmExaggeration(exaggerateArms, step);
             if (!Actor.TryFindSpan(time, ReplayRecording.SampleInterval, out int index, out float blend))
@@ -85,9 +88,16 @@ namespace Zetori.Replay
                 transform.TransformPoint(Vector3.Lerp(from.EyePosition, to.EyePosition, blend)),
                 transform.rotation * PackedRotation.Blend(from.EyeRotation, to.EyeRotation, blend));
             Eyes = CorrectLimbs(from, to, blend, follow, eyes);
-            voice.transform.position = Eyes.position;
+            DressCosmetics(from, to, blend, playing);
+            voice.Transform.position = Eyes.position;
             Current = blend < 0.5f ? from : to;
-            ApplyMaterial(Current.Material);
+            ApplyMaterial(Current.Material, Current.Skin);
+        }
+
+        private void DressCosmetics(ActorFrame from, ActorFrame to, float blend, bool playing)
+        {
+            try { cosmetics.Pose(from, to, blend, playing); }
+            catch (Exception e) { Log.ExceptionOnce($"replay-dress-{Actor.Id}", e, "Showing a replay player's cosmetics failed"); }
         }
 
         private void SetArmExaggeration(bool exaggerate, float step)
@@ -129,14 +139,22 @@ namespace Zetori.Replay
         {
             Transform? upper = Joint(upperJoint), lower = Joint(lowerJoint), hand = Joint(handJoint);
             if (upper == null || lower == null || hand == null) return;
+            Vector3 wrist = RecordedWrist(from, to, blend, lowerJoint, handJoint);
+            hand.position = lower.TransformPoint(wrist);
             if (!TryLimbDelta(limb, from, to, blend, out Pose shown, out Pose target)) return;
             Transform transform = root.transform;
             Vector3 local = transform.InverseTransformPoint(hand.position);
             Vector3 reach = transform.TransformPoint(target.position + target.rotation * (Quaternion.Inverse(shown.rotation) * (local - shown.position)));
             Quaternion grip = WorldDelta(shown, target) * hand.rotation;
-            Vector3 wrist = lower.InverseTransformPoint(hand.position);
             TwoBoneIK.Solve(upper, lower, hand, ExaggeratedReach(limb, reach));
             hand.SetPositionAndRotation(lower.TransformPoint(wrist), grip);
+        }
+
+        private Vector3 RecordedWrist(ActorFrame from, ActorFrame to, float blend, int lowerJoint, int handJoint)
+        {
+            RigSkeleton skeleton = Actor.Skeleton;
+            int lower = skeleton.IkJoints[lowerJoint], hand = skeleton.IkJoints[handJoint];
+            return Vector3.Lerp(skeleton.OffsetWithin(from, lower, hand), skeleton.OffsetWithin(to, lower, hand), blend);
         }
 
         private bool TryLimbDelta(int limb, ActorFrame from, ActorFrame to, float blend, out Pose shown, out Pose target)
@@ -163,20 +181,10 @@ namespace Zetori.Replay
 
         internal void UpdateVoice(float time, bool playing)
         {
-            VoiceSegment? segment = playing && root.activeSelf ? Actor.Voice.At(time) : null;
-            if (segment == null)
-            {
-                if (voice.isPlaying) voice.Stop();
-                return;
-            }
-            float offset = time - segment.Start;
-            if (segment != playingSegment) Load(segment);
-            if (!voice.isPlaying)
-            {
-                voice.Play();
-                voice.time = offset;
-            }
-            else if (Mathf.Abs(voice.time - offset) > VoiceResyncTolerance) voice.time = offset;
+            bool audible = playing && root.activeSelf;
+            voice.Update(Actor.Voice, time, audible);
+            try { cosmetics.UpdateSounds(time, audible); }
+            catch (Exception e) { Log.ExceptionOnce($"replay-cosmetic-sounds-{Actor.Id}", e, "Playing a replay player's cosmetic sounds failed"); }
         }
 
         private static float Follow(float step, float rigLerp, bool appeared)
@@ -195,45 +203,30 @@ namespace Zetori.Replay
             }
         }
 
-        private void ApplyMaterial(int index)
+        private void ApplyMaterial(int index, int skin)
         {
-            if (index == appliedMaterial || bodyMaterials.Length == 0) return;
+            if ((index == appliedMaterial && skin == appliedSkin) || bodyMaterials.Length == 0) return;
+            if (!skins.TryResolve(skin, out PuppetSkins.Look? look)) return;
             appliedMaterial = index;
+            appliedSkin = skin;
+            Material? skinBody = look?.Body;
             Material[] tags = appearance.TagMaterials;
-            Material skin = index > 0 && index < tags.Length && tags[index] != null ? tags[index] : appearance.BodyMaterials[0];
-            bodyMaterials[0] = skin;
-            body.sharedMaterials = bodyMaterials;
+            Material shown = index > 0 && index < tags.Length && tags[index] != null ? tags[index] : skinBody ?? appearance.BodyMaterials[0];
+            body.sharedMesh = look?.Mesh ?? appearance.BodyMesh;
+            body.sharedMaterials = skinBody != null ? SkinMaterials(shown, look?.Chest) : DefaultMaterials(shown);
             if (head == null || !appearance.HeadSharesSkin || headMaterials.Length == 0) return;
-            headMaterials[0] = skin;
+            headMaterials[0] = shown;
             head.sharedMaterials = headMaterials;
         }
 
-        private void Load(VoiceSegment segment)
+        private Material[] DefaultMaterials(Material shown)
         {
-            voice.Stop();
-            ReleaseClip();
-            float[] samples = segment.ToFloats();
-            int position = 0;
-            clip = AudioClip.Create(
-                $"Replay {Actor.Name}", samples.Length, 1, segment.SampleRate, false,
-                data =>
-                {
-                    int count = Mathf.Clamp(samples.Length - position, 0, data.Length);
-                    Array.Copy(samples, position, data, 0, count);
-                    Array.Clear(data, count, data.Length - count);
-                    position += count;
-                },
-                newPosition => position = newPosition);
-            voice.clip = clip;
-            playingSegment = segment;
+            bodyMaterials[0] = shown;
+            return bodyMaterials;
         }
 
-        private void ReleaseClip()
-        {
-            if (clip != null) UnityEngine.Object.Destroy(clip);
-            clip = null;
-            playingSegment = null;
-        }
+        private static Material[] SkinMaterials(Material shown, Material? chest) =>
+            chest != null ? new[] { shown, chest } : new[] { shown };
 
         private static Transform[] BuildJoints(RigSkeleton skeleton, Transform root)
         {
@@ -285,7 +278,9 @@ namespace Zetori.Replay
 
         public void Dispose()
         {
-            ReleaseClip();
+            voice.Dispose();
+            cosmetics.Dispose();
+            skins.Dispose();
             if (root != null) UnityEngine.Object.Destroy(root);
             appearance.Dispose();
         }

@@ -15,7 +15,7 @@ namespace Zetori.GameCamera.Vr
         private const float SummonWindow = 0.4f;
         private const float SummonDistance = 0.55f;
         private const float SummonDrop = 0.08f;
-        private const float StartupSummonDelay = 1.5f;
+        private const float ArrivalSummonDelay = 1.5f;
         private const float TrackingNotStarted = -1f;
         private const float RiseSeconds = 0.65f;
         private const float FadeInSeconds = 0.4f;
@@ -43,7 +43,7 @@ namespace Zetori.GameCamera.Vr
         private VrCameraModel? model;
         private VrCameraHand? holder;
         private bool deployed;
-        private bool startupSummonHandled;
+        private bool arrivalSummonHandled;
         private float trackingStartedAt = TrackingNotStarted;
         private float fade;
         private float riseProgress = 1f;
@@ -101,7 +101,7 @@ namespace Zetori.GameCamera.Vr
             Pose head = HeadView.Eyes(tagger.offlineVRRig);
 
             if (summonPress.Update(input.rightControllerPrimaryButton, now)) ToggleTablet(tagger, output, head, scale);
-            else SummonOnStartup(tagger, output, head, scale, now);
+            else SummonOnArrival(tagger, output, head, scale, now);
             if (model != null) UpdateTablet(tagger, model, head, scale, now, deltaTime);
 
             AimView(head, player.headCollider.transform.parent, scale, deltaTime);
@@ -114,14 +114,15 @@ namespace Zetori.GameCamera.Vr
             }
         }
 
-        internal void Hide()
+        internal void FadeAway()
         {
             cosmetics.Restore();
-            model?.Hide();
+            deployed = false;
+            arrivalSummonHandled = false;
             holder = null;
-            fade = 0f;
             FinishRise();
             view.Invalidate();
+            if (model != null) StepFade(model, false, Time.unscaledDeltaTime);
         }
 
         private void FinishRise()
@@ -130,22 +131,22 @@ namespace Zetori.GameCamera.Vr
             riseProgress = 1f;
         }
 
-        private void SummonOnStartup(GorillaTagger tagger, CameraWrapper output, Pose head, float scale, float now)
+        private void SummonOnArrival(GorillaTagger tagger, CameraWrapper output, Pose head, float scale, float now)
         {
-            if (startupSummonHandled || tagger.mainCamera == null) return;
+            if (arrivalSummonHandled || tagger.mainCamera == null) return;
             if (trackingStartedAt == TrackingNotStarted)
             {
                 if (tagger.mainCamera.transform.localPosition != Vector3.zero) trackingStartedAt = now;
                 return;
             }
-            if (now - trackingStartedAt < StartupSummonDelay) return;
-            startupSummonHandled = true;
+            if (now - trackingStartedAt < ArrivalSummonDelay) return;
+            arrivalSummonHandled = true;
             Summon(tagger, output, head, scale);
         }
 
         private void ToggleTablet(GorillaTagger tagger, CameraWrapper output, Pose head, float scale)
         {
-            startupSummonHandled = true;
+            arrivalSummonHandled = true;
             if (TabletVisible) Dismiss(tagger);
             else Summon(tagger, output, head, scale);
         }
@@ -172,9 +173,14 @@ namespace Zetori.GameCamera.Vr
             camera.SetCosmeticsShown(CosmeticsShown);
             bool visible = TabletVisible;
             if (!visible) holder = null;
-            fade = Mathf.MoveTowards(fade, visible ? 1f : 0f, deltaTime / (visible ? FadeInSeconds : FadeOutSeconds));
             if (visible) AdvanceRise(camera, deltaTime);
             MoveFollower(camera, head, scale, deltaTime);
+            StepFade(camera, visible, deltaTime);
+        }
+
+        private void StepFade(VrCameraModel camera, bool visible, float deltaTime)
+        {
+            fade = Mathf.MoveTowards(fade, visible ? 1f : 0f, deltaTime / (visible ? FadeInSeconds : FadeOutSeconds));
             camera.SetFade(fade);
             if (fade > 0f) camera.Show();
             else camera.Hide();

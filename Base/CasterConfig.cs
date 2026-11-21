@@ -143,7 +143,7 @@ namespace Zetori.Base
             file = config;
             config.SaveOnConfigSet = false;
 
-            ActiveCameraMode = config.Bind("Camera", "Mode", CameraMode.Spectator, "Default shows your own first person view, Spectator follows the selected player, Freecam flies the camera on its own, Web watches the action from placed nodes.");
+            ActiveCameraMode = config.Bind("Camera", "Mode", CameraMode.Spectator, "Default shows your own first person view, Spectator follows the selected player, Freecam flies the camera on its own, Web watches the action from placed nodes, Camera uses the in-game VR camera tablet.");
             VrMode = config.Bind("VR Camera", "Mode", VrCameraMode.Handheld, "What the in-game VR camera shows: FirstPerson, ThirdPerson, Follower or Handheld.");
             VrFirstPersonCosmetics = config.Bind("VR Camera", "First Person Cosmetics", true, "Whether the in-game VR camera shows your own cosmetics in first person.");
             FieldOfView = Range(config, "Camera", "Field Of View", 100f, 10f, 130f);
